@@ -1,0 +1,34 @@
+{
+  "name": "money7-api",
+  "version": "1.0.0",
+  "description": "API to handle money7 requests.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "test": "jest"
+  },
+  "author": "willian f mustafa <willianfmustafa@gmail.com>",
+  "license": "ISC",
+  "keywords": [
+    "api",
+    "money7"
+  ],
+  "dependencies": {
+    "bcrypt": "^5.0.1",
+    "body-parser": "^1.20.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.1",
+    "express": "^4.18.1",
+    "jsonwebtoken": "^8.5.1",
+    "pg": "^8.7.3",
+    "sequelize": "^6.20.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.17.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.26.0",
+    "jest": "^28.1.1",
+    "supertest": "^6.2.3"
+  }
+}
