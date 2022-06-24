@@ -10,10 +10,6 @@ const Cartoes = database.define('Cartoes', {
     allowNull: false,
     primaryKey: true,
   },
-  cartao: {
-    type: Sequelize.STRING,
-    allowNull: false,
-  },
   limite: {
     type: Sequelize.DOUBLE,
     allowNull: false,
@@ -21,7 +17,12 @@ const Cartoes = database.define('Cartoes', {
   vencimento: {
     type: Sequelize.INTEGER,
     allowNull: false,
-    defaultValue: 10,
+    defaultValue: 15,
+  },
+  fechamento: {
+    type: Sequelize.INTEGER,
+    allowNull: false,
+    defaultValue: 8,
   },
 });
 
