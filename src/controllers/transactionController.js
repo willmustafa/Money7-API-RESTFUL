@@ -69,7 +69,7 @@ const setOne = (req, res) => {
     id_categoria: req.body.id_categoria,
     id_users: req.body.id_users,
   }).then((data) => res.json(data))
-    .catch((error) => res.json(error));
+    .catch((error) => res.status(400).json(error));
 };
 
 const putOne = (req, res) => {
@@ -85,7 +85,7 @@ const putOne = (req, res) => {
       id: req.params.id,
     },
   }).then((data) => res.json(data))
-    .catch((error) => res.json(error));
+    .catch((error) => res.status(400).json(error));
 };
 
 const deleteOne = (req, res) => {
@@ -94,7 +94,7 @@ const deleteOne = (req, res) => {
       id: req.params.id,
     },
   }).then((data) => res.json(data))
-    .catch((error) => res.json(error));
+    .catch((error) => res.status(400).json(error));
 };
 
 const getSomaMes = (req, res) => {

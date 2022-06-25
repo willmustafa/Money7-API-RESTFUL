@@ -15,6 +15,11 @@ const getAll = (req, res) => {
       attributes: ['nome', 'cor', 'icone'],
       as: 'instituicao',
     }],
+    where: {
+      contaObjetivo: {
+        [Sequelize.Op.ne]: true
+      }
+    },
   }).then((data) => res.json(data))
     .catch((err) => res.json(err));
 };
@@ -46,7 +51,7 @@ const setOne = (req, res) => {
     id_instituicao: req.body.id_instituicao,
     id_users: req.body.id_users,
   }).then((data) => res.json(data))
-    .catch((error) => res.json(error));
+    .catch((error) => res.status(400).json(error));
 };
 
 const putOne = (req, res) => {
@@ -59,7 +64,7 @@ const putOne = (req, res) => {
       id_conta: req.params.id,
     },
   }).then((data) => res.json(data))
-    .catch((error) => res.json(error));
+    .catch((error) => res.status(400).json(error));
 };
 
 const deleteOne = (req, res) => {
@@ -68,7 +73,7 @@ const deleteOne = (req, res) => {
       id_conta: req.params.id,
     },
   }).then((data) => res.json(data))
-    .catch((error) => res.json(error));
+    .catch((error) => res.status(400).json(error));
 };
 
 const getSaldoAtualPrevisto = (req, res) => {
@@ -83,10 +88,10 @@ const getSaldoAtualPrevisto = (req, res) => {
             )
             +
             (
-                SELECT COALESCE(SUM(
-                    CASE WHEN "Transactions".date <= '${req.query.date}' THEN valor ELSE 0 END
-                ),0) as saldo_contas FROM "Transactions"
-            )
+              SELECT COALESCE(SUM(
+                  CASE WHEN "Transactions".date <= '${req.query.date}' AND "Transactions".id_conta = "Contas".id_conta THEN valor ELSE 0 END
+              ),0) as saldo_contas FROM "Transactions"
+          )
             `), 'saldo_atual'],
     ],
     include: [{
@@ -94,6 +99,11 @@ const getSaldoAtualPrevisto = (req, res) => {
       attributes: ['nome', 'cor', 'icone'],
       as: 'instituicao',
     }],
+    where: {
+      contaObjetivo: {
+        [Sequelize.Op.ne]: true
+      }
+    },
     group: ['id_conta', 'instituicao.id_instituicao'],
   }).then((data) => res.json(data))
     .catch((err) => res.json(err));

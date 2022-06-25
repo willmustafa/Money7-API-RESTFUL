@@ -2,7 +2,7 @@ const Categorias = require('../models/CategoriasModel');
 
 const getAll = (req, res) => {
   Categorias.findAll().then((data) => res.json(data))
-    .catch((error) => res.json(error));
+    .catch((error) => res.status(400).json(error));
 };
 
 const getOne = (req, res) => {
@@ -29,7 +29,7 @@ const putOne = (req, res) => {
       id_cartao: req.params.id,
     },
   }).then((data) => res.json(data))
-    .catch((error) => res.json(error));
+    .catch((error) => res.status(400).json(error));
 };
 
 const deleteOne = (req, res) => {
@@ -38,7 +38,7 @@ const deleteOne = (req, res) => {
       id_cartao: req.params.id,
     },
   }).then((data) => res.json(data))
-    .catch((error) => res.json(error));
+    .catch((error) => res.status(400).json(error));
 };
 
 module.exports = {

@@ -1,9 +1,17 @@
 const Objetivos = require('../models/ObjetivosModel');
 const Categorias = require('../models/CategoriasModel');
+const Contas = require('../models/ContasModel');
+const sequelize = require('sequelize');
 
 const getAll = (req, res) => {
   Objetivos.findAll({
-    attributes: ['id_objetivo', 'titulo', 'cor', 'icone', 'valor_total', 'date'],
+    attributes: ['id_objetivo', 'titulo', 'cor', 'icone', 'valor_total', 'date', 'id_categoria',
+    [sequelize.literal(`(
+      SELECT COALESCE(SUM(
+          CASE WHEN "Transactions".date <= '${req.query.date}' AND "Transactions".id_conta = "Objetivos".id_conta THEN valor ELSE 0 END
+      ),0) as saldo_contas FROM "Transactions"
+    )`), 'saldo_atual']
+  ],
     include: [
       {
         model: Categorias,
@@ -11,7 +19,7 @@ const getAll = (req, res) => {
         as: 'categoria',
       }],
   }).then((data) => res.json(data))
-    .catch((err) => res.json(err));
+  .catch((err) => res.status(400).json(err));
 };
 
 const getOne = (req, res) => {
@@ -27,20 +35,28 @@ const getOne = (req, res) => {
         }],
     },
   ).then((data) => res.json(data))
-    .catch((err) => res.json(err));
+  .catch((err) => res.status(400).json(err));
 };
 
 const setOne = (req, res) => {
-  Objetivos.create({
-    titulo: req.body.titulo,
-    cor: req.body.cor,
-    icone: req.body.icone,
-    valor_total: req.body.valor_total,
-    date: req.body.date,
-    id_categoria: req.body.id_categoria,
+  Contas.create({
+    saldo: 0,
+    id_instituicao: 9999,
+    contaObjetivo: true,
     id_users: req.body.id_users,
+  }).then(data => {
+    Objetivos.create({
+      titulo: req.body.titulo,
+      cor: req.body.cor,
+      icone: req.body.icone,
+      valor_total: req.body.valor,
+      date: req.body.date,
+      id_categoria: req.body.id_categoria,
+      id_conta: data.dataValues.id_conta,
+      id_users: req.body.id_users,
+    })
   }).then((data) => res.json(data))
-    .catch((error) => res.json(error));
+  .catch((err) => res.status(400).json(err));
 };
 
 const putOne = (req, res) => {
@@ -56,7 +72,7 @@ const putOne = (req, res) => {
       id_objetivo: req.params.id,
     },
   }).then((data) => res.json(data))
-    .catch((error) => res.json(error));
+    .catch((error) => res.status(400).json(error));
 };
 
 const deleteOne = (req, res) => {
@@ -65,7 +81,7 @@ const deleteOne = (req, res) => {
       id_objetivo: req.params.id,
     },
   }).then((data) => res.json(data))
-    .catch((error) => res.json(error));
+    .catch((error) => res.status(400).json(error));
 };
 
 module.exports = {

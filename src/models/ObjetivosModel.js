@@ -1,6 +1,7 @@
 const Sequelize = require('sequelize');
 const database = require('../database');
 const Categorias = require('./CategoriasModel');
+const Contas = require('./ContasModel');
 const Users = require('./UsersModel');
 
 const Objetivos = database.define('Objetivos', {
@@ -38,5 +39,8 @@ Categorias.hasMany(Objetivos, { foreignKey: 'id_categoria' });
 
 Objetivos.belongsTo(Users, { constraint: true, foreignKey: 'id_users', as: 'users' });
 Users.hasMany(Objetivos, { foreignKey: 'id_users' });
+
+Objetivos.belongsTo(Contas, { constraint: true, foreignKey: 'id_conta', as: 'conta' });
+Contas.hasMany(Objetivos, { foreignKey: 'id_conta' });
 
 module.exports = Objetivos;

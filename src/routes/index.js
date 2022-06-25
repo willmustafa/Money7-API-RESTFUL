@@ -4,6 +4,7 @@ const transacoesRoute = require('./transacoes');
 const contasRoute = require('./contas');
 const objetivosRoute = require('./objetivos');
 const categoriasRoute = require('./categorias');
+const instituicoesRoute = require('./instituicoes')
 const transacoesFiltradasRoute = require('./transacoesFiltradas');
 const contasFiltradasRoute = require('./contasFiltradas');
 
@@ -20,4 +21,5 @@ module.exports = function (app) {
   app.use('/objetivos', objetivosRoute);
   app.use('/cartoes', cartoesRoute);
   app.use('/categorias', categoriasRoute);
+  app.use('/instituicoes', instituicoesRoute)
 };

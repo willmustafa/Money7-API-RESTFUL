@@ -24,6 +24,7 @@ app.use((req, res, next) => {
 if (process.env.NODE_ENV !== 'test') {
   app.listen(port, () => console.log(`Listening on port ${port}`));
 }
+const databaseSync = require('./database/sync')
 
 // ROUTES
 require('./routes/index')(app);

@@ -19,6 +19,11 @@ const Contas = database.define('Contas', {
     allowNull: false,
     defaultValue: Sequelize.NOW,
   },
+  contaObjetivo: {
+    type: Sequelize.BOOLEAN,
+    allowNull: true,
+    defaultValue: false
+  }
 });
 
 Contas.belongsTo(Instituicoes, { constraint: true, foreignKey: 'id_instituicao', as: 'instituicao' });
