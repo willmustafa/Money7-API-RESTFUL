@@ -19,10 +19,6 @@ const Objetivos = database.define('Objetivos', {
     type: Sequelize.STRING,
     allowNull: false,
   },
-  icone: {
-    type: Sequelize.STRING,
-    allowNull: false,
-  },
   valor_total: {
     type: Sequelize.DOUBLE,
     allowNull: false,
@@ -32,6 +28,10 @@ const Objetivos = database.define('Objetivos', {
     allowNull: false,
     defaultValue: Sequelize.NOW,
   },
+  description: {
+    type: Sequelize.TEXT,
+    allowNull: true
+  }
 });
 
 Objetivos.belongsTo(Categorias, { constraint: true, foreignKey: 'id_categoria', as: 'categoria' });

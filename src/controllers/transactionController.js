@@ -11,6 +11,11 @@ const getAll = (req, res) => {
       'descricao',
       'date',
     ],
+    where: {
+      id_conta: {
+        [Sequelize.Op.notIn]: Sequelize.literal('SELECT id_conta FROM "Objetivos"')
+      }
+    },
     include: [
       {
         model: Categorias,
@@ -144,9 +149,29 @@ const getSomaMes = (req, res) => {
                               ) as cur_sum FROM "Transactions") as cur
                               on cur IS NOT NULL
                                LIMIT 1)`), 'receita_perc_last'],
-      [Sequelize.literal(`SUM(CASE WHEN valor >= 0 AND EXTRACT(MONTH FROM date) = EXTRACT(MONTH FROM '${req.query.date}'::date ) THEN valor ELSE 0 END)`), 'receita'],
-      [Sequelize.literal(`SUM(CASE WHEN valor < 0 AND EXTRACT(MONTH FROM date) = EXTRACT(MONTH FROM '${req.query.date}'::date ) THEN valor ELSE 0 END)`), 'despesa'],
-      [Sequelize.literal(`COALESCE(SUM(CASE WHEN EXTRACT(MONTH FROM date) = EXTRACT(MONTH FROM '${req.query.date}'::date ) THEN valor ELSE 0 END)+(SELECT SUM(CASE WHEN  EXTRACT(MONTH FROM "Contas".date) >= EXTRACT(MONTH FROM '${req.body.date}'::date ) THEN saldo ELSE 0 END) as saldo_contas FROM "Contas"),0)`), 'saldo_atual'],
+      [Sequelize.literal(`SUM(CASE WHEN valor >= 0 AND EXTRACT(MONTH FROM date) = EXTRACT(MONTH FROM '${req.query.date}'::date ) 
+      AND "Transactions".id_conta not in (SELECT id_conta FROM "Objetivos")
+      THEN valor ELSE 0 END)`), 'receita'],
+      [Sequelize.literal(`SUM(CASE WHEN valor < 0 AND EXTRACT(MONTH FROM date) = EXTRACT(MONTH FROM '${req.query.date}'::date )
+      AND "Transactions".id_conta not in (SELECT id_conta FROM "Objetivos") THEN valor ELSE 0 END)`), 'despesa'],
+      [Sequelize.literal(`(SELECT COALESCE(SUM(
+        CASE WHEN "Contas"."date" <= '${req.query.date}' AND "Contas"."contaObjetivo" = false THEN saldo ELSE 0 END
+        ),0) as saldo FROM "Contas")
+        +
+        (
+          SELECT COALESCE(SUM(
+              CASE WHEN "Transactions".date <= '${req.query.date}' AND "Transactions".id_conta not in (SELECT id_conta FROM "Objetivos") THEN valor ELSE 0 END
+          ),0) as saldo_contas FROM "Transactions"
+      )`), 'saldo_atual'],
+      [Sequelize.literal(`(SELECT COALESCE(SUM(
+        CASE WHEN "Contas"."contaObjetivo" = false THEN saldo ELSE 0 END
+        ),0) as saldo FROM "Contas")
+        +
+        (
+          SELECT COALESCE(SUM(
+              CASE WHEN "Transactions".id_conta not in (SELECT id_conta FROM "Objetivos") THEN valor ELSE 0 END
+          ),0) as saldo_contas FROM "Transactions"
+      )`), 'saldo_total'],
     ],
     raw: true,
   }).then((data) => res.json(data))
@@ -166,6 +191,11 @@ const getBalancoMensal = (req, res) => {
             [Sequelize.Op.lte]: req.query.date,
           },
         },
+        {
+          id_conta: {
+            [Sequelize.Op.notIn]: Sequelize.literal('(SELECT id_conta FROM "Objetivos")')
+          }
+        }
       ],
     },
     group: Sequelize.literal('TRIM(BOTH FROM TO_CHAR(date, \'TMMonth\')) '),
@@ -188,6 +218,11 @@ const getGastosReceitasMensal = (req, res) => {
             [Sequelize.Op.lte]: req.query.date,
           },
         },
+        {
+          id_conta: {
+            [Sequelize.Op.notIn]: Sequelize.literal('(SELECT id_conta FROM "Objetivos")')
+          }
+        }
       ],
     },
     group: [
@@ -216,6 +251,11 @@ const getDespesaCategoria = (req, res) => {
             [Sequelize.Op.lte]: req.query.date,
           },
         },
+        {
+          id_conta: {
+            [Sequelize.Op.notIn]: Sequelize.literal('(SELECT id_conta FROM "Objetivos")')
+          }
+        }
       ],
     },
     group: [
@@ -243,6 +283,11 @@ const getReceitaCategoria = (req, res) => {
             [Sequelize.Op.lte]: req.query.date,
           },
         },
+        {
+          id_conta: {
+            [Sequelize.Op.notIn]: Sequelize.literal('(SELECT id_conta FROM "Objetivos")')
+          }
+        }
       ],
     },
     group: [

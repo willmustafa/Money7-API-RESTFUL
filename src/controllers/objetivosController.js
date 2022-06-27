@@ -5,7 +5,7 @@ const sequelize = require('sequelize');
 
 const getAll = (req, res) => {
   Objetivos.findAll({
-    attributes: ['id_objetivo', 'titulo', 'cor', 'icone', 'valor_total', 'date', 'id_categoria',
+    attributes: ['id_objetivo', 'titulo', 'cor', 'valor_total', 'date', 'id_categoria', 'description',
     [sequelize.literal(`(
       SELECT COALESCE(SUM(
           CASE WHEN "Transactions".date <= '${req.query.date}' AND "Transactions".id_conta = "Objetivos".id_conta THEN valor ELSE 0 END
@@ -26,7 +26,7 @@ const getOne = (req, res) => {
   Objetivos.findByPk(
     req.params.id,
     {
-      attributes: ['id_objetivo', 'titulo', 'cor', 'icone', 'valor_total', 'date'],
+      attributes: ['id_objetivo', 'titulo', 'cor', 'icone', 'valor_total', 'date', 'id_categoria', 'description'],
       include: [
         {
           model: Categorias,
@@ -39,6 +39,7 @@ const getOne = (req, res) => {
 };
 
 const setOne = (req, res) => {
+  console.log(req.body)
   Contas.create({
     saldo: 0,
     id_instituicao: 9999,
@@ -48,9 +49,9 @@ const setOne = (req, res) => {
     Objetivos.create({
       titulo: req.body.titulo,
       cor: req.body.cor,
-      icone: req.body.icone,
       valor_total: req.body.valor,
       date: req.body.date,
+      description: req.body.description,
       id_categoria: req.body.id_categoria,
       id_conta: data.dataValues.id_conta,
       id_users: req.body.id_users,
@@ -63,8 +64,8 @@ const putOne = (req, res) => {
   Objetivos.update({
     titulo: req.body.titulo,
     cor: req.body.cor,
-    icone: req.body.icone,
     valor_total: req.body.valor_total,
+    description: req.body.description,
     date: req.body.date,
     id_categoria: req.body.id_categoria,
   }, {
