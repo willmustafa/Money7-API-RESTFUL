@@ -1,13 +1,15 @@
 const Categorias = require('../models/CategoriasModel');
 
 const getAll = (req, res) => {
-  Categorias.findAll().then((data) => res.json(data))
+  Categorias.findAll({
+    order: [['tipo', 'ASC'], ['nome', 'ASC']]
+  }).then((data) => res.json(data))
     .catch((error) => res.status(400).json(error));
 };
 
 const getOne = (req, res) => {
   Categorias.findByPk(req.params.id).then((data) => res.json(data))
-    .catch((err) => res.json(err));
+  .catch((error) => res.status(400).json(error));
 };
 
 const setOne = (req, res) => {
@@ -15,18 +17,21 @@ const setOne = (req, res) => {
     nome: req.body.nome,
     cor: req.body.cor,
     icone: req.body.icone,
+    tipo: req.body.tipo,
     id_users: req.body.id_users,
-  }).then((response) => res.json(response));
+  }).then((response) => res.json(response))
+  .catch((error) => res.status(400).json(error));
 };
 
 const putOne = (req, res) => {
   Categorias.update({
-    cartao: req.body.cartao,
-    limite: req.body.limite,
-    id_instituicao: req.body.id_instituicao,
+    nome: req.body.nome,
+    cor: req.body.cor,
+    icone: req.body.icone,
+    tipo: req.body.tipo,
   }, {
     where: {
-      id_cartao: req.params.id,
+      id_categoria: req.params.id,
     },
   }).then((data) => res.json(data))
     .catch((error) => res.status(400).json(error));
@@ -35,7 +40,7 @@ const putOne = (req, res) => {
 const deleteOne = (req, res) => {
   Categorias.destroy({
     where: {
-      id_cartao: req.params.id,
+      id_categoria: req.params.id,
     },
   }).then((data) => res.json(data))
     .catch((error) => res.status(400).json(error));

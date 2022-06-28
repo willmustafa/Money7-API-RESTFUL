@@ -18,6 +18,7 @@ const getAll = (req, res) => {
         attributes: ['nome', 'cor', 'icone'],
         as: 'categoria',
       }],
+      order: [['date', 'ASC']]
   }).then((data) => res.json(data))
   .catch((err) => res.status(400).json(err));
 };

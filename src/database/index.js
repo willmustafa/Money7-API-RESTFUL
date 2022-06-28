@@ -3,6 +3,7 @@ const Sequelize = require('sequelize');
 // Configs
 const databaseConfig = {
   dialect: 'postgres',
+  protocol: 'postgres',
   host: process.env.DATABASE_URL,
   username: process.env.DATABASE_USER,
   password: process.env.DATABASE_PASS,

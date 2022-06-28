@@ -7,19 +7,15 @@ const Instituicoes = require('../models/InstituicoesModel');
 const getAll = (req, res) => {
   Transactions.findAll({
     attributes: [
+      'id',
       'valor',
       'descricao',
       'date',
     ],
-    where: {
-      id_conta: {
-        [Sequelize.Op.notIn]: Sequelize.literal('SELECT id_conta FROM "Objetivos"')
-      }
-    },
     include: [
       {
         model: Categorias,
-        attributes: ['nome', 'cor', 'icone'],
+        attributes: ['id_categoria', 'nome', 'cor', 'icone'],
         as: 'categoria',
       },
       {
@@ -27,10 +23,16 @@ const getAll = (req, res) => {
         as: 'conta',
         include: [{
           model: Instituicoes,
-          attributes: ['nome', 'cor', 'icone'],
+          attributes: ['id_instituicao', 'nome', 'cor', 'icone'],
           as: 'instituicao',
         }],
       }],
+    where: {
+        id_conta: {
+          [Sequelize.Op.notIn]: Sequelize.literal('(SELECT id_conta FROM "Objetivos")')
+        }
+    },
+    order: [['date', 'DESC']]
   }).then((data) => res.json(data))
     .catch((err) => res.json(err));
 };
