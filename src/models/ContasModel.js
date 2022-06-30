@@ -1,5 +1,6 @@
 const Sequelize = require('sequelize');
 const database = require('../database');
+const Cartoes = require('./CartoesModel');
 const Instituicoes = require('./InstituicoesModel');
 const Users = require('./UsersModel');
 
@@ -31,5 +32,8 @@ Instituicoes.hasMany(Contas, { foreignKey: 'id_instituicao' });
 
 Contas.belongsTo(Users, { constraint: true, foreignKey: 'id_users', as: 'users' });
 Users.hasMany(Contas, { foreignKey: 'id_users' });
+
+Contas.belongsTo(Cartoes, { constraint: true, foreignKey: 'id_cartao', as: 'cartao' });
+Cartoes.hasOne(Contas, { foreignKey: 'id_cartao' });
 
 module.exports = Contas;

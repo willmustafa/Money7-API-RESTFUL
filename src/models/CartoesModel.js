@@ -32,4 +32,6 @@ Instituicoes.hasMany(Cartoes, { foreignKey: 'id_instituicao' });
 Cartoes.belongsTo(Users, { constraint: true, foreignKey: 'id_users', as: 'users' });
 Users.hasMany(Cartoes, { foreignKey: 'id_users' });
 
+// Cartoes.hasOne(Contas, {foreignKey: 'id_cartao', as: 'cartao'})
+
 module.exports = Cartoes;

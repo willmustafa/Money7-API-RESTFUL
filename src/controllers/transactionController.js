@@ -117,13 +117,15 @@ const getSomaMes = (req, res) => {
           ),0
       ) as despesa_perc_last FROM "Transactions" as tra
       LEFT JOIN (SELECT SUM(
-              CASE WHEN EXTRACT(MONTH FROM date) = EXTRACT(MONTH FROM ('${req.query.date}'::date  - interval '1 month'))
+              CASE WHEN date_part('month', "Transactions".date) = date_part('month', timestamp '${req.query.date}') 
+              AND date_part('year', "Transactions".date) = date_part('year', timestamp '${req.query.date}') 
           AND valor < 0
               THEN valor ELSE 0 END
               ) as last_m_sum FROM "Transactions") as last_m
               on last_m IS NOT NULL
       LEFT JOIN (SELECT SUM(
-              CASE WHEN EXTRACT(MONTH FROM date) = EXTRACT(MONTH FROM '${req.query.date}'::date ) 
+              CASE WHEN date_part('month', "Transactions".date) = date_part('month', timestamp '${req.query.date}') 
+              AND date_part('year', "Transactions".date) = date_part('year', timestamp '${req.query.date}') 
           AND valor < 0
               THEN valor ELSE 0 END
               ) as cur_sum FROM "Transactions") as cur
@@ -139,32 +141,33 @@ const getSomaMes = (req, res) => {
                   ),0
               ) as receita_perc_last FROM "Transactions" as tra
                       LEFT JOIN (SELECT SUM(
-                              CASE WHEN EXTRACT(MONTH FROM date) = EXTRACT(MONTH FROM ('${req.query.date}'::date - interval '1 month'))
+                              CASE WHEN date_part('month', "Transactions".date) = date_part('month', timestamp '${req.query.date}') 
+                              AND date_part('year', "Transactions".date) = date_part('year', timestamp '${req.query.date}') 
                           AND valor >= 0
                               THEN valor ELSE 0 END
                               ) as last_m_sum FROM "Transactions") as last_m
                               on last_m IS NOT NULL
                       LEFT JOIN (SELECT SUM(
-                              CASE WHEN EXTRACT(MONTH FROM date) = EXTRACT(MONTH FROM '${req.query.date}'::date ) 
+                              CASE WHEN date_part('month', "Transactions".date) = date_part('month', timestamp '${req.query.date}') 
+                              AND date_part('year', "Transactions".date) = date_part('year', timestamp '${req.query.date}') 
                           AND valor >= 0
                               THEN valor ELSE 0 END
                               ) as cur_sum FROM "Transactions") as cur
                               on cur IS NOT NULL
                                LIMIT 1)`), 'receita_perc_last'],
-      [Sequelize.literal(`SUM(CASE WHEN valor >= 0 AND EXTRACT(MONTH FROM date) = EXTRACT(MONTH FROM '${req.query.date}'::date ) 
+      [Sequelize.literal(`SUM(CASE WHEN valor >= 0 AND
+        date_part('month', "Transactions".date) = date_part('month', timestamp '${req.query.date}') 
+          AND date_part('year', "Transactions".date) = date_part('year', timestamp '${req.query.date}') 
       AND "Transactions".id_conta not in (SELECT id_conta FROM "Objetivos")
       THEN valor ELSE 0 END)`), 'receita'],
-      [Sequelize.literal(`SUM(CASE WHEN valor < 0 AND EXTRACT(MONTH FROM date) = EXTRACT(MONTH FROM '${req.query.date}'::date )
+      [Sequelize.literal(`SUM(CASE WHEN valor < 0 AND date_part('month', "Transactions".date) = date_part('month', timestamp '${req.query.date}') 
+      AND date_part('year', "Transactions".date) = date_part('year', timestamp '${req.query.date}') 
       AND "Transactions".id_conta not in (SELECT id_conta FROM "Objetivos") THEN valor ELSE 0 END)`), 'despesa'],
-      [Sequelize.literal(`(SELECT COALESCE(SUM(
-        CASE WHEN "Contas"."date" <= '${req.query.date}' AND "Contas"."contaObjetivo" = false THEN saldo ELSE 0 END
-        ),0) as saldo FROM "Contas")
-        +
-        (
-          SELECT COALESCE(SUM(
-              CASE WHEN "Transactions".date <= '${req.query.date}' AND "Transactions".id_conta not in (SELECT id_conta FROM "Objetivos") THEN valor ELSE 0 END
-          ),0) as saldo_contas FROM "Transactions"
-      )`), 'saldo_atual'],
+      [Sequelize.literal(`(COALESCE(SUM(
+              CASE WHEN date_part('month', "Transactions".date) = date_part('month', timestamp '${req.query.date}') 
+              AND date_part('year', "Transactions".date) = date_part('year', timestamp '${req.query.date}') 
+              AND "Transactions".id_conta not in (SELECT id_conta FROM "Objetivos") THEN valor ELSE 0 END
+          ),0))`), 'saldo_atual'],
       [Sequelize.literal(`(SELECT COALESCE(SUM(
         CASE WHEN "Contas"."contaObjetivo" = false THEN saldo ELSE 0 END
         ),0) as saldo FROM "Contas")

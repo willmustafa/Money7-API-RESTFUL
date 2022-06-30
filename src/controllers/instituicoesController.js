@@ -1,8 +1,14 @@
+const sequelize = require('sequelize');
 const Instituicoes = require('../models/InstituicoesModel');
 
 const getAll = (req, res) => {
   Instituicoes.findAll({
     attributes: ['id_instituicao', 'nome', 'cor', 'icone'],
+    where: {
+      nome: {
+        [sequelize.Op.ne]: 'Objetivos'
+      }
+    }
   }).then((data) => res.json(data))
     .catch((err) => res.status(400).json(err));
 };

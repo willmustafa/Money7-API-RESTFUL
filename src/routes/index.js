@@ -21,5 +21,5 @@ module.exports = function (app) {
   app.use('/objetivos', objetivosRoute);
   app.use('/cartoes', cartoesRoute);
   app.use('/categorias', categoriasRoute);
-  app.use('/instituicoes', instituicoesRoute)
+  app.use('/instituicoes', instituicoesRoute);
 };

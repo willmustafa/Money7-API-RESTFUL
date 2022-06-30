@@ -1,6 +1,7 @@
 const Sequelize = require('sequelize');
 const Contas = require('../models/ContasModel');
 const Instituicoes = require('../models/InstituicoesModel');
+const Cartoes = require('../models/CartoesModel');
 
 const getAll = (req, res) => {
   Contas.findAll({
@@ -8,7 +9,7 @@ const getAll = (req, res) => {
       'id_conta',
       'saldo',
       'date',
-      'id_instituicao',
+      'id_instituicao'
     ],
     include: [{
       model: Instituicoes,
@@ -18,6 +19,9 @@ const getAll = (req, res) => {
     where: {
       contaObjetivo: {
         [Sequelize.Op.ne]: true
+      },
+      id_cartao: {
+        [Sequelize.Op.eq]: null
       }
     },
   }).then((data) => res.json(data))
@@ -89,7 +93,9 @@ const getSaldoAtualPrevisto = (req, res) => {
             +
             (
               SELECT COALESCE(SUM(
-                  CASE WHEN "Transactions".date <= '${req.query.date}' AND "Transactions".id_conta = "Contas".id_conta THEN valor ELSE 0 END
+                  CASE WHEN date_part('month', "Transactions".date) = date_part('month', timestamp '${req.query.date}') 
+                  AND date_part('year', "Transactions".date) = date_part('year', timestamp '${req.query.date}')  
+                  AND "Transactions".id_conta = "Contas".id_conta THEN valor ELSE 0 END
               ),0) as saldo_contas FROM "Transactions"
           )
             `), 'saldo_atual'],
@@ -102,9 +108,14 @@ const getSaldoAtualPrevisto = (req, res) => {
     where: {
       contaObjetivo: {
         [Sequelize.Op.ne]: true
+      },
+      id_cartao: {
+        [Sequelize.Op.eq]: null
       }
     },
+    order: [[Sequelize.literal('saldo_atual DESC')]],
     group: ['id_conta', 'instituicao.id_instituicao'],
+    limit: req.query.limit ? req.query.limit : 4
   }).then((data) => res.json(data))
     .catch((err) => res.json(err));
 };
@@ -114,6 +125,35 @@ const getAllInstituicoes = (req, res) => {
     .catch((err) => res.json(err));
 };
 
+const getContasCartoes = (req, res) => {
+  Contas.findAll({
+    attributes: [
+      'id_conta',
+      'saldo',
+      'date',
+      'id_instituicao',
+      'id_cartao'
+    ],
+    include: [{
+      model: Instituicoes,
+      attributes: ['nome', 'cor', 'icone'],
+      as: 'instituicao',
+    },
+    {
+      model: Cartoes,
+      attributes: ['limite', 'vencimento', 'fechamento'],
+      as: 'cartao',
+    }],
+    where: {
+      contaObjetivo: {
+        [Sequelize.Op.ne]: true
+      }
+    },
+    group: ['Contas.id_cartao', 'Contas.id_conta', 'instituicao.id_instituicao', 'cartao.id_cartao']
+  }).then((data) => res.json(data))
+    .catch((err) => res.json(err));
+}
+
 module.exports = {
   getAll,
   getOne,
@@ -122,4 +162,5 @@ module.exports = {
   deleteOne,
   getSaldoAtualPrevisto,
   getAllInstituicoes,
+  getContasCartoes
 };

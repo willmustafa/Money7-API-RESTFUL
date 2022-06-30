@@ -8,7 +8,8 @@ const getAll = (req, res) => {
     attributes: ['id_objetivo', 'titulo', 'cor', 'valor_total', 'date', 'id_categoria', 'description',
     [sequelize.literal(`(
       SELECT COALESCE(SUM(
-          CASE WHEN "Transactions".date <= '${req.query.date}' AND "Transactions".id_conta = "Objetivos".id_conta THEN valor ELSE 0 END
+          CASE WHEN "Transactions".date <= '${req.query.date}' 
+          AND "Transactions".id_conta = "Objetivos".id_conta THEN valor ELSE 0 END
       ),0) as saldo_contas FROM "Transactions"
     )`), 'saldo_atual']
   ],
