@@ -1,113 +1,120 @@
-const Sequelize = require('sequelize');
-const Transactions = require('../models/TransactionModel');
-const Categorias = require('../models/CategoriasModel');
-const Contas = require('../models/ContasModel');
-const Instituicoes = require('../models/InstituicoesModel');
+const Sequelize = require('sequelize')
+const Transactions = require('../models/TransactionModel')
+const Categorias = require('../models/CategoriasModel')
+const Contas = require('../models/ContasModel')
+const Instituicoes = require('../models/InstituicoesModel')
+const { MonthsBefore } = require('../utils/date-format')
 
 const getAll = (req, res) => {
-  Transactions.findAll({
-    attributes: [
-      'id',
-      'valor',
-      'descricao',
-      'date',
-    ],
-    include: [
-      {
-        model: Categorias,
-        attributes: ['id_categoria', 'nome', 'cor', 'icone'],
-        as: 'categoria',
-      },
-      {
-        model: Contas,
-        as: 'conta',
-        include: [{
-          model: Instituicoes,
-          attributes: ['id_instituicao', 'nome', 'cor', 'icone'],
-          as: 'instituicao',
-        }],
-      }],
-    where: {
-        id_conta: {
-          [Sequelize.Op.notIn]: Sequelize.literal('(SELECT id_conta FROM "Objetivos")')
-        }
-    },
-    order: [['date', 'DESC']]
-  }).then((data) => res.json(data))
-    .catch((err) => res.json(err));
-};
+	Transactions.findAll({
+		attributes: [
+			'id',
+			'valor',
+			'descricao',
+			'date',
+		],
+		include: [
+			{
+				model: Categorias,
+				attributes: ['id_categoria', 'nome', 'cor', 'icone'],
+				as: 'categoria',
+			},
+			{
+				model: Contas,
+				as: 'conta',
+				include: [{
+					model: Instituicoes,
+					attributes: ['id_instituicao', 'nome', 'cor', 'icone'],
+					as: 'instituicao',
+				}],
+			}],
+		where: {
+			[Sequelize.Op.and]: [
+				{id_conta: {
+					[Sequelize.Op.notIn]: Sequelize.literal('(SELECT id_conta FROM "Objetivos")')
+				}},
+				Sequelize.literal(`date_part('month', "Transactions".date) = date_part('month', timestamp '${req.query.date}')`)
+				,
+				Sequelize.literal(`date_part('year', "Transactions".date) = date_part('year', timestamp '${req.query.date}')`)
+				
+			]
+		},
+		order: [['date', 'DESC']]
+	}).then((data) => res.json(data))
+		.catch((err) => res.json(err))
+}
 
 const getOne = (req, res) => {
-  Transactions.findByPk(
-    req.params.id,
-    {
-      attributes: [
-        'valor',
-        'descricao',
-        'date',
-      ],
-      include: [
-        {
-          model: Categorias,
-          attributes: ['nome', 'cor', 'icone'],
-          as: 'categoria',
-        },
-        {
-          model: Contas,
-          as: 'conta',
-          include: [{
-            model: Instituicoes,
-            attributes: ['nome', 'cor', 'icone'],
-            as: 'instituicao',
-          }],
-        }],
-    },
-  ).then((data) => res.json(data))
-    .catch((err) => res.json(err));
-};
+	Transactions.findByPk(
+		req.params.id,
+		{
+			attributes: [
+				'valor',
+				'descricao',
+				'date',
+			],
+			include: [
+				{
+					model: Categorias,
+					attributes: ['nome', 'cor', 'icone'],
+					as: 'categoria',
+				},
+				{
+					model: Contas,
+					as: 'conta',
+					include: [{
+						model: Instituicoes,
+						attributes: ['nome', 'cor', 'icone'],
+						as: 'instituicao',
+					}],
+				}],
+		},
+	).then((data) => res.json(data))
+		.catch((err) => res.json(err))
+}
 
 const setOne = (req, res) => {
-  Transactions.create({
-    valor: req.body.valor,
-    descricao: req.body.descricao,
-    date: req.body.date,
-    status: req.body.status,
-    id_conta: req.body.id_conta,
-    id_categoria: req.body.id_categoria,
-    id_users: req.body.id_users,
-  }).then((data) => res.json(data))
-    .catch((error) => res.status(400).json(error));
-};
+	Transactions.create({
+		valor: req.body.valor,
+		descricao: req.body.descricao,
+		date: req.body.date,
+		status: req.body.status,
+		id_conta: req.body.id_conta,
+		id_categoria: req.body.id_categoria,
+		id_users: req.body.id_users,
+	}).then((data) => res.json(data))
+		.catch((error) => res.status(400).json(error))
+}
 
 const putOne = (req, res) => {
-  Transactions.update({
-    valor: req.body.valor,
-    descricao: req.body.descricao,
-    date: req.body.date,
-    status: req.body.status,
-    id_conta: req.body.id_conta,
-    id_categoria: req.body.id_categoria,
-  }, {
-    where: {
-      id: req.params.id,
-    },
-  }).then((data) => res.json(data))
-    .catch((error) => res.status(400).json(error));
-};
+	Transactions.update({
+		valor: req.body.valor,
+		descricao: req.body.descricao,
+		date: req.body.date,
+		status: req.body.status,
+		id_conta: req.body.id_conta,
+		id_categoria: req.body.id_categoria,
+	}, {
+		where: {
+			id: req.params.id,
+		},
+	}).then((data) => res.json(data))
+		.catch((error) => res.status(400).json(error))
+}
 
 const deleteOne = (req, res) => {
-  Transactions.destroy({
-    where: {
-      id: req.params.id,
-    },
-  }).then((data) => res.json(data))
-    .catch((error) => res.status(400).json(error));
-};
+	Transactions.destroy({
+		where: {
+			id: req.params.id,
+		},
+	}).then((data) => res.json(data))
+		.catch((error) => res.status(400).json(error))
+}
 
 const getSomaMes = (req, res) => {
-  Transactions.findAll({
-    attributes: [
-      [Sequelize.literal(`(SELECT 
+	Transactions.findAll({
+		attributes: [
+			[Sequelize.literal(`(SELECT 
       COALESCE(
           ROUND(
               (
@@ -131,7 +138,7 @@ const getSomaMes = (req, res) => {
               ) as cur_sum FROM "Transactions") as cur
               on cur IS NOT NULL
               LIMIT 1)`), 'despesa_perc_last'],
-      [Sequelize.literal(`(SELECT 
+			[Sequelize.literal(`(SELECT 
               COALESCE(
                   ROUND(
                       (
@@ -155,178 +162,188 @@ const getSomaMes = (req, res) => {
                               ) as cur_sum FROM "Transactions") as cur
                               on cur IS NOT NULL
                                LIMIT 1)`), 'receita_perc_last'],
-      [Sequelize.literal(`SUM(CASE WHEN valor >= 0 AND
+			[Sequelize.literal(`SUM(CASE WHEN valor >= 0 AND
         date_part('month', "Transactions".date) = date_part('month', timestamp '${req.query.date}') 
           AND date_part('year', "Transactions".date) = date_part('year', timestamp '${req.query.date}') 
       AND "Transactions".id_conta not in (SELECT id_conta FROM "Objetivos")
       THEN valor ELSE 0 END)`), 'receita'],
-      [Sequelize.literal(`SUM(CASE WHEN valor < 0 AND date_part('month', "Transactions".date) = date_part('month', timestamp '${req.query.date}') 
+			[Sequelize.literal(`SUM(CASE WHEN valor < 0 AND date_part('month', "Transactions".date) = date_part('month', timestamp '${req.query.date}') 
       AND date_part('year', "Transactions".date) = date_part('year', timestamp '${req.query.date}') 
       AND "Transactions".id_conta not in (SELECT id_conta FROM "Objetivos") THEN valor ELSE 0 END)`), 'despesa'],
-      [Sequelize.literal(`(COALESCE(SUM(
+			[Sequelize.literal(`(COALESCE(SUM(
               CASE WHEN date_part('month', "Transactions".date) = date_part('month', timestamp '${req.query.date}') 
               AND date_part('year', "Transactions".date) = date_part('year', timestamp '${req.query.date}') 
               AND "Transactions".id_conta not in (SELECT id_conta FROM "Objetivos") THEN valor ELSE 0 END
           ),0))`), 'saldo_atual'],
-      [Sequelize.literal(`(SELECT COALESCE(SUM(
+			[Sequelize.literal(`(SELECT COALESCE(SUM(
         CASE WHEN "Contas"."contaObjetivo" = false THEN saldo ELSE 0 END
         ),0) as saldo FROM "Contas")
         +
         (
           SELECT COALESCE(SUM(
-              CASE WHEN "Transactions".id_conta not in (SELECT id_conta FROM "Objetivos") THEN valor ELSE 0 END
+              CASE WHEN "Transactions".id_conta not in (SELECT id_conta FROM "Objetivos") AND
+              "Transactions".id_conta not in (SELECT id_conta FROM "Contas" WHERE "Contas"."id_cartao" IS NOT NULL)
+              THEN valor ELSE 0 END
           ),0) as saldo_contas FROM "Transactions"
       )`), 'saldo_total'],
-    ],
-    raw: true,
-  }).then((data) => res.json(data))
-    .catch((err) => res.json(err));
-};
+		],
+		raw: true,
+	}).then((data) => res.json(data))
+		.catch((err) => res.json(err))
+}
 
 const getBalancoMensal = (req, res) => {
-  Transactions.findAll({
-    attributes: [
-      [Sequelize.literal('TRIM(BOTH FROM TO_CHAR(date, \'TMMonth\'))'), 'date'],
-      [Sequelize.fn('sum', Sequelize.col('valor')), 'saldo'],
-    ],
-    where: {
-      [Sequelize.Op.and]: [
-        {
-          date: {
-            [Sequelize.Op.lte]: req.query.date,
-          },
-        },
-        {
-          id_conta: {
-            [Sequelize.Op.notIn]: Sequelize.literal('(SELECT id_conta FROM "Objetivos")')
-          }
-        }
-      ],
-    },
-    group: Sequelize.literal('TRIM(BOTH FROM TO_CHAR(date, \'TMMonth\')) '),
-    order: Sequelize.literal('TRIM(BOTH FROM TO_CHAR(date, \'TMMonth\')) '),
-  }).then((data) => res.json(data))
-    .catch((err) => res.json(err));
-};
+	Transactions.findAll({
+		attributes: [
+			[Sequelize.literal('to_char(date_trunc(\'month\', date), \'YYYY\')'), 'year'],
+			[Sequelize.literal('to_char(date_trunc(\'month\', date), \'Mon\')'), 'month'],
+			[Sequelize.literal('to_char(date_trunc(\'month\', date), \'MM\')'), 'month_number'],
+			[Sequelize.literal('ROUND(CAST(SUM(valor) as numeric),2)'), 'saldo'],
+		],
+		where: {
+			[Sequelize.Op.and]: [
+				{
+					date: {
+						[Sequelize.Op.lte]: req.query.date,
+					},
+				},
+				{
+					date: {
+						[Sequelize.Op.gte]: MonthsBefore(req.query.date, 12),
+					},
+				},
+				{
+					id_conta: {
+						[Sequelize.Op.notIn]: Sequelize.literal('(SELECT id_conta FROM "Objetivos")')
+					}
+				}
+			],
+		},
+		group: Sequelize.literal('date_trunc(\'month\', date)'),
+		order: Sequelize.literal('1,3')
+	}).then((data) => res.json(data))
+		.catch((err) => res.json(err))
+}
 
 const getGastosReceitasMensal = (req, res) => {
-  Transactions.findAll({
-    attributes: [
-      [Sequelize.literal('TRIM(BOTH FROM TO_CHAR(date, \'TMMonth\'))'), 'date'],
-      [Sequelize.literal('COALESCE(SUM(CASE WHEN valor >= 0 THEN valor ELSE 0 END),0)'), 'receita'],
-      [Sequelize.literal('ABS(COALESCE(SUM(CASE WHEN valor < 0 THEN valor ELSE 0 END),0))'), 'despesa'],
-    ],
-    where: {
-      [Sequelize.Op.and]: [
-        {
-          date: {
-            [Sequelize.Op.lte]: req.query.date,
-          },
-        },
-        {
-          id_conta: {
-            [Sequelize.Op.notIn]: Sequelize.literal('(SELECT id_conta FROM "Objetivos")')
-          }
-        }
-      ],
-    },
-    group: [
-      Sequelize.literal('TRIM(BOTH FROM TO_CHAR(date, \'TMMonth\')) '),
-    ],
-    order: Sequelize.literal('TRIM(BOTH FROM TO_CHAR(date, \'TMMonth\')) '),
-  }).then((data) => res.json(data))
-    .catch((err) => res.json(err));
-};
+	Transactions.findAll({
+		attributes: [
+			[Sequelize.literal('to_char(date_trunc(\'month\', date), \'YYYY\')'), 'year'],
+			[Sequelize.literal('to_char(date_trunc(\'month\', date), \'Mon\')'), 'month'],
+			[Sequelize.literal('to_char(date_trunc(\'month\', date), \'MM\')'), 'month_number'],
+			[Sequelize.literal('COALESCE(ROUND(CAST(SUM(CASE WHEN valor >= 0 THEN valor ELSE 0 END) as numeric),2),0)'), 'receita'],
+			[Sequelize.literal('ABS(COALESCE(ROUND(CAST(SUM(CASE WHEN valor < 0 THEN valor ELSE 0 END) as numeric) ,2),0))'), 'despesa'],
+		],
+		where: {
+			[Sequelize.Op.and]: [
+				{
+					date: {
+						[Sequelize.Op.lte]: req.query.date,
+					},
+				},
+				{
+					date: {
+						[Sequelize.Op.gte]: MonthsBefore(req.query.date, 12),
+					},
+				},
+				{
+					id_conta: {
+						[Sequelize.Op.notIn]: Sequelize.literal('(SELECT id_conta FROM "Objetivos")')
+					}
+				}
+			],
+		},
+		group: Sequelize.literal('date_trunc(\'month\', date)'),
+		order: Sequelize.literal('1,3')
+	}).then((data) => res.json(data))
+		.catch((err) => res.json(err))
+}
 
 const getDespesaCategoria = (req, res) => {
-  Transactions.findAll({
-    attributes: [
-      'id_categoria',
-      [Sequelize.fn('sum', Sequelize.col('valor')), 'valor'],
-    ],
-    where: {
-      [Sequelize.Op.and]: [
-        {
-          valor: {
-            [Sequelize.Op.lt]: 0,
-          },
-        },
-        {
-          date: {
-            [Sequelize.Op.lte]: req.query.date,
-          },
-        },
-        {
-          id_conta: {
-            [Sequelize.Op.notIn]: Sequelize.literal('(SELECT id_conta FROM "Objetivos")')
-          }
-        }
-      ],
-    },
-    group: [
-      'id_categoria',
-    ],
-  }).then((data) => res.json(data))
-    .catch((err) => res.json(err));
-};
+	Transactions.findAll({
+		attributes: [
+			'id_categoria',
+			[Sequelize.literal(`
+      COALESCE(SUM(
+        CASE WHEN 
+        "Transactions".id_conta not in (SELECT id_conta FROM "Objetivos") AND
+        date_part('month', "Transactions".date) = date_part('month', timestamp '${req.query.date}') AND
+        date_part('year', "Transactions".date) = date_part('year', timestamp '${req.query.date}') AND
+        "Transactions".valor < 0
+        THEN valor ELSE 0 END
+      ),0)
+      `), 'valor']
+		],
+		include: [
+			{
+				model: Categorias,
+				attributes: ['nome'],
+				as: 'categoria',
+			}
+		],
+		group: [
+			'Transactions.id_categoria',
+			'categoria.id_categoria'
+		],
+	}).then((data) => res.json(data))
+		.catch((err) => res.status(400).json(err))
+}
 
 const getReceitaCategoria = (req, res) => {
-  Transactions.findAll({
-    attributes: [
-      'id_categoria',
-      [Sequelize.fn('sum', Sequelize.col('valor')), 'valor'],
-    ],
-    where: {
-      [Sequelize.Op.and]: [
-        {
-          valor: {
-            [Sequelize.Op.gte]: 0,
-          },
-        },
-        {
-          date: {
-            [Sequelize.Op.lte]: req.query.date,
-          },
-        },
-        {
-          id_conta: {
-            [Sequelize.Op.notIn]: Sequelize.literal('(SELECT id_conta FROM "Objetivos")')
-          }
-        }
-      ],
-    },
-    group: [
-      'id_categoria',
-    ],
-  }).then((data) => res.json(data))
-    .catch((err) => res.json(err));
-};
+	Transactions.findAll({
+		attributes: [
+			'id_categoria',
+			[Sequelize.literal(`
+      COALESCE(SUM(
+        CASE WHEN 
+        "Transactions".id_conta not in (SELECT id_conta FROM "Objetivos") AND
+        date_part('month', "Transactions".date) = date_part('month', timestamp '${req.query.date}') AND
+        date_part('year', "Transactions".date) = date_part('year', timestamp '${req.query.date}') AND
+        "Transactions".valor > 0
+        THEN valor ELSE 0 END
+      ),0)
+      `), 'valor']
+		],
+		include: [
+			{
+				model: Categorias,
+				attributes: ['nome'],
+				as: 'categoria',
+			}
+		],
+		group: [
+			'Transactions.id_categoria',
+			'categoria.id_categoria'
+		],
+	}).then((data) => res.json(data))
+		.catch((err) => res.json(err))
+}
 
 const getPendencias = (req, res) => {
-  Transactions.findAll({
-    attributes: [
-      [Sequelize.literal('COALESCE(SUM(CASE WHEN valor >= 0 THEN valor ELSE 0 END),0)'), 'receita'],
-      [Sequelize.literal('COALESCE(SUM(CASE WHEN valor < 0 THEN valor ELSE 0 END),0)'), 'despesa'],
-    ],
-    where: {
-      status: {
-        [Sequelize.Op.eq]: false,
-      },
-    },
-  }).then((data) => res.json(data))
-    .catch((err) => res.json(err));
-};
+	Transactions.findAll({
+		attributes: [
+			[Sequelize.literal('COALESCE(SUM(CASE WHEN valor >= 0 THEN valor ELSE 0 END),0)'), 'receita'],
+			[Sequelize.literal('COALESCE(SUM(CASE WHEN valor < 0 THEN valor ELSE 0 END),0)'), 'despesa'],
+		],
+		where: {
+			status: {
+				[Sequelize.Op.eq]: false,
+			},
+		},
+	}).then((data) => res.json(data))
+		.catch((err) => res.json(err))
+}
 
 module.exports = {
-  getAll,
-  getOne,
-  setOne,
-  putOne,
-  deleteOne,
-  getSomaMes,
-  getBalancoMensal,
-  getGastosReceitasMensal,
-  getDespesaCategoria,
-  getReceitaCategoria,
-  getPendencias,
-};
+	getAll,
+	getOne,
+	setOne,
+	putOne,
+	deleteOne,
+	getSomaMes,
+	getBalancoMensal,
+	getGastosReceitasMensal,
+	getDespesaCategoria,
+	getReceitaCategoria,
+	getPendencias,
+}

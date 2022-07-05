@@ -1,9 +1,9 @@
-const express = require('express');
+const express = require('express')
 
-const router = express.Router();
-const contasController = require('../controllers/contasController');
+const router = express.Router()
+const contasController = require('../controllers/contasController')
 
-router.get('/saldoAtualPrevisto', contasController.getSaldoAtualPrevisto);
-router.get('/contasCartoes', contasController.getContasCartoes);
+router.get('/saldoAtualPrevisto', contasController.getSaldoAtualPrevisto)
+router.get('/contasCartoes', contasController.getContasCartoes)
 
-module.exports = router;
+module.exports = router
