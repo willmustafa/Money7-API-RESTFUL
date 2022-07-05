@@ -8,7 +8,7 @@ const databaseConfig = {
 	username: process.env.DATABASE_USER,
 	password: process.env.DATABASE_PASS,
 	database: process.env.DATABASE_DB,
-	logging: true,
+	logging: false,
 }
 
 // INIT

@@ -19,6 +19,11 @@ module.exports = function (app) {
 	app.use('/transacoesFiltradas', transacoesFiltradasRoute)
 	app.use('/contas', contasRoute)
 	app.use('/contasFiltradas', contasFiltradasRoute)
+
+	/**
+	 * @swagger
+	 * /objetivos
+	 */
 	app.use('/objetivos', objetivosRoute)
 	app.use('/cartoes', cartoesRoute)
 	app.use('/categorias', categoriasRoute)

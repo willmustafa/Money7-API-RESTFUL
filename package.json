@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "test": "jest"
+    "test": "jest",
+    "swagger-autogen": "node ./src/swagger.js"
   },
   "author": "willian f mustafa <willianfmustafa@gmail.com>",
   "license": "ISC",

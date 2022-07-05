@@ -2,6 +2,8 @@ require('dotenv').config()
 const express = require('express')
 const bodyParser = require('body-parser')
 const cors = require('cors')
+const swaggerUi = require('swagger-ui-express')
+const swaggerFile = require('./swagger_output.json')
 
 const app = express()
 
@@ -27,6 +29,7 @@ if (process.env.NODE_ENV !== 'test') {
 const databaseSync = require('./database/sync')
 
 // ROUTES
+app.use('/doc', swaggerUi.serve, swaggerUi.setup(swaggerFile))
 require('./routes/index')(app)
 
 module.exports = app
