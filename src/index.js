@@ -14,8 +14,16 @@ const port = process.env.PORT || 3030
 // MIDDLEWARES
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: false }))
+
+const whitelist = ['http://localhost:8000', 'http://localhost:8080', 'http://localhost:3000', 'https://money7-989.pages.dev']
 app.use(cors({
-	origin: 'http://localhost:3000',
+	origin: function (origin, callback) {
+		if (whitelist.indexOf(origin) !== -1) {
+			callback(null, true)
+		} else {
+			callback(null, false)
+		}
+	},
 	optionsSuccessStatus: 200,
 	methods: ['GET', 'PUT', 'DELETE', 'POST'],
 	credentials: true
