@@ -17,6 +17,9 @@ const Users = database.define('Users', {
 	password: {
 		type: Sequelize.STRING,
 	},
+	refreshToken: {
+		type: Sequelize.STRING,
+	},
 })
 
 module.exports = Users

@@ -8,6 +8,7 @@ const instituicoesRoute = require('./instituicoes')
 const transacoesFiltradasRoute = require('./transacoesFiltradas')
 const contasFiltradasRoute = require('./contasFiltradas')
 const scrapper = require('./scrapper')
+const verifyJWT = require('../controllers/verifyJWT')
 
 module.exports = function (app) {
 	app.get('/', async (req, res) => {
@@ -15,15 +16,12 @@ module.exports = function (app) {
 	})
 
 	app.use('/users', usersRoute)
+
+	app.use(verifyJWT)
 	app.use('/transacoes', transacoesRoute)
 	app.use('/transacoesFiltradas', transacoesFiltradasRoute)
 	app.use('/contas', contasRoute)
 	app.use('/contasFiltradas', contasFiltradasRoute)
-
-	/**
-	 * @swagger
-	 * /objetivos
-	 */
 	app.use('/objetivos', objetivosRoute)
 	app.use('/cartoes', cartoesRoute)
 	app.use('/categorias', categoriasRoute)

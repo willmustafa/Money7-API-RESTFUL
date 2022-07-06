@@ -4,12 +4,13 @@ const Contas = require('../models/ContasModel')
 const sequelize = require('sequelize')
 
 const getAll = (req, res) => {
+	const date = req.query.date ? `"Transactions".date <= '${req.query.date}' AND` : ''
+
 	Objetivos.findAll({
-		attributes: ['id_objetivo', 'titulo', 'cor', 'valor_total', 'date', 'id_categoria', 'description',
+		attributes: ['id_objetivo', 'titulo', 'cor', 'valor_total', 'date', 'id_categoria', 'description', 'id_conta',
 			[sequelize.literal(`(
       SELECT COALESCE(SUM(
-          CASE WHEN "Transactions".date <= '${req.query.date}' 
-          AND "Transactions".id_conta = "Objetivos".id_conta THEN valor ELSE 0 END
+          CASE WHEN ${date} "Transactions".id_conta = "Objetivos".id_conta THEN valor ELSE 0 END
       ),0) as saldo_contas FROM "Transactions"
     )`), 'saldo_atual']
 		],

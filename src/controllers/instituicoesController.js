@@ -8,7 +8,8 @@ const getAll = (req, res) => {
 			nome: {
 				[sequelize.Op.ne]: 'Objetivos'
 			}
-		}
+		},
+		order: [['nome', 'ASC']]
 	}).then((data) => res.json(data))
 		.catch((err) => res.status(400).json(err))
 }

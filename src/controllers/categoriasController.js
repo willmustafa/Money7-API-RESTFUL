@@ -2,7 +2,7 @@ const Categorias = require('../models/CategoriasModel')
 
 const getAll = (req, res) => {
 	Categorias.findAll({
-		order: [['tipo', 'ASC'], ['nome', 'ASC']]
+		order: [['nome', 'ASC']]
 	}).then((data) => res.json(data))
 		.catch((error) => res.status(400).json(error))
 }
