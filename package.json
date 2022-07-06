@@ -26,15 +26,15 @@
     "nubank-api": "^3.0.0",
     "pg": "^8.7.3",
     "sequelize": "^6.20.0",
-    "uuid": "^8.3.2"
+    "uuid": "^8.3.2",
+    "swagger-autogen": "^2.21.4",
+    "swagger-ui-express": "^4.4.0"
   },
   "devDependencies": {
     "eslint": "^8.19.0",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-plugin-import": "^2.26.0",
     "jest": "^28.1.1",
-    "supertest": "^6.2.3",
-    "swagger-autogen": "^2.21.4",
-    "swagger-ui-express": "^4.4.0"
+    "supertest": "^6.2.3"
   }
 }
