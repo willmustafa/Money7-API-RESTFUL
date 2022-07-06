@@ -9,6 +9,9 @@ const databaseConfig = {
 	password: process.env.DATABASE_PASS,
 	database: process.env.DATABASE_DB,
 	logging: false,
+	dialectOptions: {
+		ssl: true
+	}
 }
 
 // INIT
