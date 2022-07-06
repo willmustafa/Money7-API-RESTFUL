@@ -4,15 +4,16 @@ const Sequelize = require('sequelize')
 const databaseConfig = {
 	dialect: 'postgres',
 	protocol: 'postgres',
-	host: process.env.DATABASE_URL,
+	host: process.env.DATABASE_URL+'?sslmode=require',
 	username: process.env.DATABASE_USER,
 	password: process.env.DATABASE_PASS,
 	database: process.env.DATABASE_DB,
 	logging: false,
 	dialectOptions: {
-		ssl: true
-	},
-	ssl: { rejectUnauthorized: false }
+		ssl: {
+			rejectUnauthorized: false,
+		}
+	}
 }
 
 // INIT
