@@ -11,7 +11,8 @@ const databaseConfig = {
 	logging: false,
 	dialectOptions: {
 		ssl: true
-	}
+	},
+	ssl: { rejectUnauthorized: false }
 }
 
 // INIT
