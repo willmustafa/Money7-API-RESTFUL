@@ -2,13 +2,7 @@ const Sequelize = require('sequelize')
 
 // Configs
 const databaseConfig = {
-	dialect: 'postgres',
-	protocol: 'postgres',
-	host: process.env.DATABASE_URL+'?sslmode=require',
-	username: process.env.DATABASE_USER,
-	password: process.env.DATABASE_PASS,
-	database: process.env.DATABASE_DB,
-	logging: false,
+	connectionString: `postgres://${process.env.DATABASE_USER}:${process.env.DATABASE_PASS}@${process.env.DATABASE_URL}:${process.env.DATABASE_PORT}/${process.env.DATABASE_DB}?sslmode=require`,
 	dialectOptions: {
 		ssl: {
 			rejectUnauthorized: false,
