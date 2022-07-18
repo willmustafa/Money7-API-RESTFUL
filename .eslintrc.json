@@ -13,7 +13,6 @@
     },
     "rules": {
         "prettier/prettier": ["error", {"endOfLine": "auto"}],
-        "no-undefined": "error",
         "node/no-process-exit": "warn",
         "no-process-exit": "off", // deprecated ESLint v7
         "node/no-unpublished-require": "off",

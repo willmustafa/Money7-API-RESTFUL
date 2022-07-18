@@ -5,6 +5,7 @@ const Contas = require("../models/ContasModel");
 const Instituicoes = require("../models/InstituicoesModel");
 const { MonthsBefore } = require("../utils/date-format");
 const database = require("../database/index");
+const { changeNullToZero } = require("../utils/numberUtils");
 
 const getAll = async (req, res) => {
   const { date } = req.query;
@@ -33,6 +34,7 @@ const getAll = async (req, res) => {
 	LEFT OUTER JOIN "Objetivos" AS "objetivo" ON "objetivo".id_conta = "Transactions".id_conta
 	WHERE (date_part('month', "Transactions".date) = date_part('month', timestamp '${date}') 
 		   AND date_part('year', "Transactions".date) = date_part('year', timestamp '${date}')) 
+       AND "Transactions".id_users = '${req.id}' 
 	ORDER BY "Transactions"."date" DESC;`,
       { type: Sequelize.QueryTypes.SELECT }
     )
@@ -65,56 +67,120 @@ const getOne = async (req, res) => {
         ],
       },
     ],
+    where: {
+      id_users: req.id,
+    },
   })
     .then((data) => res.json(data))
     .catch((err) => res.status(204).json(err));
 };
 
 const setOne = async (req, res) => {
-  const { status, id_conta, valor, id_users, date, descricao, id_categoria } =
+  console.log(req.body);
+  let { status, id_conta, valor, date, descricao, id_categoria, id_conta2 } =
     req.body;
-  if (
-    !status ||
-    !id_conta ||
-    !valor ||
-    !id_users ||
-    date ||
-    descricao ||
-    id_categoria
-  )
-    return res.status(400).json({
-      message:
-        "Campos necessários: status, id_conta, valor, id_users, date, descricao, id_categoria",
+  // if (!id_conta || valor !== undefined || !date || !descricao || !id_categoria)
+  //   return res.status(400).json({
+  //     message:
+  //       "Campos necessários: status, id_conta, valor, date, descricao, id_categoria",
+  //   });
+
+  if (id_conta2) {
+    await createTransferencia(req, res);
+  } else {
+    if (
+      id_categoria == "dinheiro resgatado" ||
+      id_categoria == "dinheiro guardado"
+    )
+      await Categorias.findOne({
+        attributes: ["id_categoria"],
+        where: {
+          nome: id_categoria,
+        },
+      }).then(async (data) => {
+        if (data) id_categoria = data.dataValues.id_categoria;
+
+        if (!data)
+          await Categorias.create({
+            nome: id_categoria,
+            tipo: "Não Contabilizar",
+            cor: "bg-dark",
+            icone: "dollar-sign",
+          }).then((dataC) => (id_categoria = dataC.dataValues.id_categoria));
+      });
+
+    await Transactions.create({
+      valor,
+      descricao,
+      date,
+      status,
+      id_conta,
+      id_categoria,
+      id_users: req.id,
+    })
+      .then((data) => res.json(data))
+      .catch((error) => res.status(204).json(error));
+  }
+};
+
+const createTransferencia = async (req, res) => {
+  let { status, id_conta, valor, date, id_conta2 } = req.body;
+
+  let categorias = await Categorias.findAll({
+    attributes: ["id_categoria", "nome"],
+    where: {
+      nome: {
+        [Sequelize.Op.or]: ["transferência enviada", "transferência recebida"],
+      },
+    },
+    raw: true,
+  });
+
+  let contaObjetivo = await Contas.findAll({
+    where: {
+      contaObjetivo: true,
+      id_conta: {
+        [Sequelize.Op.or]: [id_conta, id_conta2],
+      },
+    },
+    raw: true,
+  });
+
+  if (categorias.length == 2) {
+    await Transactions.create({
+      valor: valor * -1,
+      descricao: "Transferência",
+      date,
+      status,
+      id_conta,
+      id_categoria: categorias.filter(
+        (el) => el.nome == "transferência enviada"
+      )[0].id_categoria,
+      id_users: req.id,
+      objetivo: contaObjetivo.length > 0 ? true : false,
     });
 
-  await Transactions.create({
-    valor,
-    descricao,
-    date,
-    status,
-    id_conta,
-    id_categoria,
-    id_users,
-  })
-    .then((data) => res.json(data))
-    .catch((error) => res.status(204).json(error));
+    await Transactions.create({
+      valor,
+      descricao: "Transferência",
+      date,
+      status,
+      id_conta: id_conta2,
+      id_categoria: categorias.filter(
+        (el) => el.nome == "transferência recebida"
+      )[0].id_categoria,
+      id_users: req.id,
+      objetivo: contaObjetivo.length > 0 ? true : false,
+    }).then((data) => res.json(data));
+  }
 };
 
 const putOne = async (req, res) => {
-  const { status, id_conta, valor, id_users, date, descricao, id_categoria } =
-    req.body;
-  if (
-    !status ||
-    !id_conta ||
-    !valor ||
-    !id_users ||
-    date ||
-    descricao ||
-    id_categoria
-  )
+  const { status, id_conta, valor, date, descricao, id_categoria } = req.body;
+  if (!status || !id_conta || !valor || !date || !descricao || !id_categoria)
     return res.status(400).json({
       message:
-        "Campos necessários: status, id_conta, valor, id_users, date, descricao, id_categoria",
+        "Campos necessários: status, id_conta, valor, date, descricao, id_categoria",
     });
 
   const { id } = req.params;
@@ -133,7 +199,7 @@ const putOne = async (req, res) => {
     {
       where: {
         id,
-        id_users,
+        id_users: req.id,
       },
     }
   )
@@ -149,6 +215,7 @@ const deleteOne = async (req, res) => {
   await Transactions.destroy({
     where: {
       id,
+      id_users: req.id,
     },
   })
     .then((data) => res.json(data))
@@ -167,7 +234,7 @@ const getSomaMes = async (req, res) => {
       COALESCE(
           ROUND(
               (
-                  (cur_sum - last_m_sum)/NULLIF(last_m_sum,0)
+                (ABS(cur_sum) - ABS(last_m_sum))/NULLIF(ABS(last_m_sum),0)
               )
               * 100
           ),0
@@ -181,14 +248,20 @@ const getSomaMes = async (req, res) => {
                 date,
                 1
               )}') 
-          AND valor < 0
+              AND valor < 0
+              AND "Transactions".id_categoria NOT IN (SELECT id_categoria FROM "Categorias" WHERE tipo = 'Não Contabilizar')
+              AND "Transactions".id_users = '${req.id}' 
+              AND "Transactions".objetivo = false
               THEN valor ELSE 0 END
               ) as last_m_sum FROM "Transactions") as last_m
               on last_m IS NOT NULL
       LEFT JOIN (SELECT SUM(
               CASE WHEN date_part('month', "Transactions".date) = date_part('month', timestamp '${date}') 
               AND date_part('year', "Transactions".date) = date_part('year', timestamp '${date}') 
-          AND valor < 0
+              AND "Transactions".id_categoria NOT IN (SELECT id_categoria FROM "Categorias" WHERE tipo = 'Não Contabilizar')
+              AND valor < 0 
+              AND "Transactions".objetivo = false
+              AND "Transactions".id_users = '${req.id}' 
               THEN valor ELSE 0 END
               ) as cur_sum FROM "Transactions") as cur
               on cur IS NOT NULL
@@ -200,7 +273,7 @@ const getSomaMes = async (req, res) => {
               COALESCE(
                   ROUND(
                       (
-                          (cur_sum - last_m_sum)/NULLIF(last_m_sum,0)
+                          (ABS(cur_sum) - ABS(last_m_sum))/NULLIF(ABS(last_m_sum),0)
                       )
                       * 100
                   ),0
@@ -214,7 +287,10 @@ const getSomaMes = async (req, res) => {
                                 date,
                                 1
                               )}') 
-                          AND valor >= 0
+                          AND valor >= 0 
+                          AND "Transactions".objetivo = false
+                          AND "Transactions".id_categoria NOT IN (SELECT id_categoria FROM "Categorias" WHERE tipo = 'Não Contabilizar')
+                          AND "Transactions".id_users = '${req.id}' 
                               THEN valor ELSE 0 END
                               ) as last_m_sum FROM "Transactions") as last_m
                               on last_m IS NOT NULL
@@ -222,6 +298,9 @@ const getSomaMes = async (req, res) => {
                               CASE WHEN date_part('month', "Transactions".date) = date_part('month', timestamp '${date}') 
                               AND date_part('year', "Transactions".date) = date_part('year', timestamp '${date}') 
                           AND valor >= 0
+                          AND "Transactions".id_categoria NOT IN (SELECT id_categoria FROM "Categorias" WHERE tipo = 'Não Contabilizar')
+                          AND "Transactions".id_users = '${req.id}' 
+                          AND "Transactions".objetivo = false
                               THEN valor ELSE 0 END
                               ) as cur_sum FROM "Transactions") as cur
                               on cur IS NOT NULL
@@ -247,12 +326,18 @@ const getSomaMes = async (req, res) => {
             date,
             1
           )}') 
+          AND "Transactions".id_users = '${req.id}' 
+          AND "Transactions".objetivo = false
+          AND "Transactions".id_categoria NOT IN (SELECT id_categoria FROM "Categorias" WHERE tipo = 'Não Contabilizar')
 					THEN valor ELSE 0 END
 					) as last_m_sum FROM "Transactions") as last_m
 					on last_m IS NOT NULL
 			LEFT JOIN (SELECT SUM(
 					CASE WHEN date_part('month', "Transactions".date) = date_part('month', timestamp '${date}') 
 					AND date_part('year', "Transactions".date) = date_part('year', timestamp '${date}') 
+          AND "Transactions".id_categoria NOT IN (SELECT id_categoria FROM "Categorias" WHERE tipo = 'Não Contabilizar')
+          AND "Transactions".id_users = '${req.id}' 
+          AND "Transactions".objetivo = false
 					THEN valor ELSE 0 END
 					) as cur_sum FROM "Transactions") as cur
 					on cur IS NOT NULL
@@ -264,33 +349,45 @@ const getSomaMes = async (req, res) => {
         date_part('month', "Transactions".date) = date_part('month', timestamp '${date}') 
           AND date_part('year', "Transactions".date) = date_part('year', timestamp '${date}') 
       AND "Transactions".id_conta not in (SELECT id_conta FROM "Objetivos")
+      AND "Transactions".id_users = '${req.id}' 
+      AND "Transactions".objetivo = false
+      AND "Transactions".id_categoria NOT IN (SELECT id_categoria FROM "Categorias" WHERE tipo = 'Não Contabilizar')
       THEN valor ELSE 0 END)`),
         "receita",
       ],
       [
-        Sequelize.literal(`SUM(CASE WHEN valor < 0 AND date_part('month', "Transactions".date) = date_part('month', timestamp '${date}') 
+        Sequelize.literal(`ABS(SUM(CASE WHEN valor < 0 AND date_part('month', "Transactions".date) = date_part('month', timestamp '${date}') 
       AND date_part('year', "Transactions".date) = date_part('year', timestamp '${date}') 
-      AND "Transactions".id_conta not in (SELECT id_conta FROM "Objetivos") THEN valor ELSE 0 END)`),
+      AND "Transactions".id_users = '${req.id}' 
+      AND "Transactions".objetivo = false
+      AND "Transactions".id_categoria NOT IN (SELECT id_categoria FROM "Categorias" WHERE tipo = 'Não Contabilizar')
+      AND "Transactions".id_conta not in (SELECT id_conta FROM "Objetivos") THEN valor ELSE 0 END))`),
         "despesa",
       ],
       [
-        Sequelize.literal(`(COALESCE(SUM(
+        Sequelize.literal(`ABS(COALESCE(SUM(
               CASE WHEN date_part('month', "Transactions".date) = date_part('month', timestamp '${date}') 
               AND date_part('year', "Transactions".date) = date_part('year', timestamp '${date}') 
+              AND "Transactions".id_users = '${req.id}' 
+              AND "Transactions".objetivo = false
+              AND "Transactions".id_categoria NOT IN (SELECT id_categoria FROM "Categorias" WHERE tipo = 'Não Contabilizar')
               AND "Transactions".id_conta not in (SELECT id_conta FROM "Objetivos") THEN valor ELSE 0 END
           ),0))`),
         "saldo_atual",
       ],
       [
         Sequelize.literal(`(SELECT COALESCE(SUM(
-        CASE WHEN "Contas"."contaObjetivo" = false THEN saldo ELSE 0 END
+        CASE WHEN "Contas"."contaObjetivo" = false 
+        AND "Contas".id_cartao IS NULL
+        THEN saldo ELSE 0 END
         ),0) as saldo FROM "Contas")
         +
         (
           SELECT COALESCE(SUM(
               CASE WHEN "Transactions".id_conta not in (SELECT id_conta FROM "Objetivos") AND
               "Transactions".id_conta not in (SELECT id_conta FROM "Contas" WHERE "Contas"."id_cartao" IS NOT NULL)
-			  AND "Transactions".id_conta not in (SELECT id_conta FROM "Objetivos")
+              AND "Transactions".id_users = '${req.id}' 
+              AND "Transactions".objetivo = false
               THEN valor ELSE 0 END
           ),0) as saldo_contas FROM "Transactions"
       )`),
@@ -299,7 +396,9 @@ const getSomaMes = async (req, res) => {
     ],
     raw: true,
   })
-    .then((data) => res.json(data))
+    .then((data) => {
+      res.json(data.map((el) => changeNullToZero(el)));
+    })
     .catch((err) => res.status(204).json(err));
 };
 
@@ -321,6 +420,9 @@ const getBalancoMensal = async (req, res) => {
     where: {
       [Sequelize.Op.and]: [
         {
+          objetivo: false,
+        },
+        {
           date: {
             [Sequelize.Op.lte]: date,
           },
@@ -334,6 +436,16 @@ const getBalancoMensal = async (req, res) => {
           id_conta: {
             [Sequelize.Op.notIn]: Sequelize.literal(
               '(SELECT id_conta FROM "Objetivos")'
+            ),
+          },
+        },
+        {
+          id_users: req.id,
+        },
+        {
+          id_categoria: {
+            [Sequelize.Op.notIn]: Sequelize.literal(
+              `(SELECT id_categoria FROM "Categorias" WHERE tipo = 'Não Contabilizar')`
             ),
           },
         },
@@ -361,19 +473,22 @@ const getGastosReceitasMensal = async (req, res) => {
       ],
       [
         Sequelize.literal(
-          "COALESCE(ROUND(CAST(SUM(CASE WHEN valor >= 0 THEN valor ELSE 0 END) as numeric),2),0)"
+          `COALESCE(ROUND(CAST(SUM(CASE WHEN valor >= 0 AND "Transactions".id_users = '${req.id}' AND "Transactions".objetivo = false THEN valor ELSE 0 END) as numeric),2),0)`
         ),
         "receita",
       ],
       [
         Sequelize.literal(
-          "ABS(COALESCE(ROUND(CAST(SUM(CASE WHEN valor < 0 THEN valor ELSE 0 END) as numeric) ,2),0))"
+          `ABS(COALESCE(ROUND(CAST(SUM(CASE WHEN valor < 0AND "Transactions".id_users = '${req.id}' AND "Transactions".objetivo = false THEN valor ELSE 0 END) as numeric) ,2),0))`
         ),
         "despesa",
       ],
     ],
     where: {
       [Sequelize.Op.and]: [
+        {
+          objetivo: false,
+        },
         {
           date: {
             [Sequelize.Op.lte]: date,
@@ -388,6 +503,16 @@ const getGastosReceitasMensal = async (req, res) => {
           id_conta: {
             [Sequelize.Op.notIn]: Sequelize.literal(
               '(SELECT id_conta FROM "Objetivos")'
+            ),
+          },
+        },
+        {
+          id_users: req.id,
+        },
+        {
+          id_categoria: {
+            [Sequelize.Op.notIn]: Sequelize.literal(
+              `(SELECT id_categoria FROM "Categorias" WHERE tipo = 'Não Contabilizar')`
             ),
           },
         },
@@ -415,7 +540,9 @@ const getDespesaCategoria = async (req, res) => {
         "Transactions".id_conta not in (SELECT id_conta FROM "Objetivos") AND
         date_part('month', "Transactions".date) = date_part('month', timestamp '${date}') AND
         date_part('year', "Transactions".date) = date_part('year', timestamp '${date}') AND
-        "Transactions".valor < 0
+        "Transactions".valor < 0 
+        AND "Transactions".objetivo = false 
+        AND "Transactions".id_users = '${req.id}' 
         THEN valor ELSE 0 END
       ),0)
       `),
@@ -429,6 +556,14 @@ const getDespesaCategoria = async (req, res) => {
         as: "categoria",
       },
     ],
+    where: {
+      id_users: req.id,
+      id_categoria: {
+        [Sequelize.Op.notIn]: Sequelize.literal(
+          `(SELECT id_categoria FROM "Categorias" WHERE tipo = 'Não Contabilizar')`
+        ),
+      },
+    },
     group: ["Transactions.id_categoria", "categoria.id_categoria"],
   })
     .then((data) => res.json(data))
@@ -450,7 +585,9 @@ const getReceitaCategoria = async (req, res) => {
         "Transactions".id_conta not in (SELECT id_conta FROM "Objetivos") AND
         date_part('month', "Transactions".date) = date_part('month', timestamp '${date}') AND
         date_part('year', "Transactions".date) = date_part('year', timestamp '${date}') AND
-        "Transactions".valor > 0
+        "Transactions".valor > 0 
+        AND "Transactions".objetivo = false
+        AND "Transactions".id_users = '${req.id}' 
         THEN valor ELSE 0 END
       ),0)
       `),
@@ -464,6 +601,14 @@ const getReceitaCategoria = async (req, res) => {
         as: "categoria",
       },
     ],
+    where: {
+      id_users: req.id,
+      id_categoria: {
+        [Sequelize.Op.notIn]: Sequelize.literal(
+          `(SELECT id_categoria FROM "Categorias" WHERE tipo = 'Não Contabilizar')`
+        ),
+      },
+    },
     group: ["Transactions.id_categoria", "categoria.id_categoria"],
   })
     .then((data) => res.json(data))
@@ -475,13 +620,13 @@ const getPendencias = (req, res) => {
     attributes: [
       [
         Sequelize.literal(
-          "COALESCE(SUM(CASE WHEN valor >= 0 THEN valor ELSE 0 END),0)"
+          `COALESCE(SUM(CASE WHEN valor >= 0 AND "Transactions".id_users = '${req.id}'  THEN valor ELSE 0 END),0)`
         ),
         "receita",
       ],
       [
         Sequelize.literal(
-          "COALESCE(SUM(CASE WHEN valor < 0 THEN valor ELSE 0 END),0)"
+          `COALESCE(SUM(CASE WHEN valor < 0 AND "Transactions".id_users = '${req.id}'  THEN valor ELSE 0 END),0)`
         ),
         "despesa",
       ],
@@ -489,6 +634,12 @@ const getPendencias = (req, res) => {
     where: {
       status: {
         [Sequelize.Op.eq]: false,
+      },
+      id_users: req.id,
+      id_categoria: {
+        [Sequelize.Op.notIn]: Sequelize.literal(
+          `(SELECT id_categoria FROM "Categorias" WHERE tipo = 'Não Contabilizar')`
+        ),
       },
     },
   })

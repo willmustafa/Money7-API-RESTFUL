@@ -3,6 +3,9 @@ const Categorias = require("../models/CategoriasModel");
 const getAll = async (req, res) => {
   await Categorias.findAll({
     order: [["nome", "ASC"]],
+    where: {
+      id_users: req.id,
+    },
   })
     .then((data) => res.json(data))
     .catch((error) => res.status(204).json(error));
@@ -13,16 +16,20 @@ const getOne = async (req, res) => {
   if (!id)
     return res.status(400).json({ message: "O id deve ser passado na url." });
 
-  await Categorias.findByPk(id)
+  await Categorias.findByPk(id, {
+    where: {
+      id_users: req.id,
+    },
+  })
     .then((data) => res.json(data))
     .catch((error) => res.status(400).json(error));
 };
 
 const setOne = async (req, res) => {
-  const { nome, cor, icone, tipo, id_users } = req.body;
-  if (!nome || !cor || !icone || !tipo || !id_users)
+  const { nome, cor, icone, tipo } = req.body;
+  if (!nome || !cor || !icone || !tipo)
     return res.status(400).json({
-      message: "Campos necessários: nome, cor, icone, tipo, id_users",
+      message: "Campos necessários: nome, cor, icone, tipo",
     });
 
   await Categorias.create({
@@ -30,17 +37,17 @@ const setOne = async (req, res) => {
     cor,
     icone,
     tipo,
-    id_users,
+    id_users: req.id,
   })
     .then((response) => res.json(response))
     .catch((error) => res.status(204).json(error));
 };
 
 const putOne = async (req, res) => {
-  const { nome, cor, icone, tipo, id_users } = req.body;
-  if (!nome || !cor || !icone || !tipo || !id_users)
+  const { nome, cor, icone, tipo } = req.body;
+  if (!nome || !cor || !icone || !tipo)
     return res.status(400).json({
-      message: "Campos necessários: nome, cor, icone, tipo, id_users",
+      message: "Campos necessários: nome, cor, icone, tipo",
     });
 
   const { id } = req.params;
@@ -57,7 +64,7 @@ const putOne = async (req, res) => {
     {
       where: {
         id_categoria: id,
-        id_users,
+        id_users: req.id,
       },
     }
   )
@@ -73,6 +80,7 @@ const deleteOne = async (req, res) => {
   await Categorias.destroy({
     where: {
       id_categoria: id,
+      id_users: req.id,
     },
   })
     .then((data) => res.json(data))

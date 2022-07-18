@@ -107,3 +107,4 @@ dist
 # Nubank
 *.p12
 src/scrappers/nubank/auth/*
+auth/

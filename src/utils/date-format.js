@@ -16,8 +16,16 @@ function MonthsBefore(date, subtractMonth = 0) {
   return new Date(dateArray[0], month, 0).toISOString();
 }
 
+function ofxToDate(date) {
+  const year = date.substring(0, 4);
+  const month = Number.parseInt(date.substring(4, 6)) - 1;
+  const day = date.substring(6, 8);
+  return new Date(year, month, day);
+}
+
 module.exports = {
   stringToIsoDate,
   lastDateOfMonth,
   MonthsBefore,
+  ofxToDate,
 };

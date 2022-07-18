@@ -3,10 +3,22 @@ const Contas = require("../models/ContasModel");
 const Instituicoes = require("../models/InstituicoesModel");
 const Cartoes = require("../models/CartoesModel");
 const { lastDateOfMonth } = require("../utils/date-format");
+const Objetivos = require("../models/ObjetivosModel");
 
 const getAll = async (req, res) => {
+  const { contaObjetivo } = req.query;
+
+  let contaObjetivoObj = { contaObjetivo: { [Sequelize.Op.ne]: true } };
+  if (contaObjetivo !== undefined) contaObjetivoObj = {};
+
   await Contas.findAll({
-    attributes: ["id_conta", "saldo", "date", "id_instituicao"],
+    attributes: [
+      "id_conta",
+      "saldo",
+      "date",
+      "id_instituicao",
+      "contaObjetivo",
+    ],
     include: [
       {
         model: Instituicoes,
@@ -15,12 +27,11 @@ const getAll = async (req, res) => {
       },
     ],
     where: {
-      contaObjetivo: {
-        [Sequelize.Op.ne]: true,
-      },
+      ...contaObjetivoObj,
       id_cartao: {
         [Sequelize.Op.eq]: null,
       },
+      id_users: req.id,
     },
   })
     .then((data) => res.json(data))
@@ -41,33 +52,36 @@ const getOne = async (req, res) => {
         as: "instituicao",
       },
     ],
+    where: {
+      id_users: req.id,
+    },
   })
     .then((data) => res.json(data))
     .catch((err) => res.status(204).json(err));
 };
 
 const setOne = async (req, res) => {
-  const { saldo, date, id_instituicao, id_users } = req.body;
-  if (!saldo || !date || !id_instituicao || !id_users)
+  const { saldo, date, id_instituicao } = req.body;
+  if (saldo === undefined || date === undefined || id_instituicao === undefined)
     return res.status(400).json({
-      message: "Campos necessários: saldo, date, id_instituicao, id_users",
+      message: "Campos necessários: saldo, date, id_instituicao",
     });
 
   await Contas.create({
     saldo: saldo,
     date: date,
     id_instituicao: id_instituicao,
-    id_users: id_users,
+    id_users: req.id,
   })
     .then((data) => res.json(data))
     .catch((error) => res.status(204).json(error));
 };
 
 const putOne = async (req, res) => {
-  const { saldo, date, id_instituicao, id_users } = req.body;
-  if (!saldo || !date || !id_instituicao || !id_users)
+  const { saldo, date, id_instituicao } = req.body;
+  if (!saldo || !date || !id_instituicao)
     return res.status(400).json({
-      message: "Campos necessários: saldo, date, id_instituicao, id_users",
+      message: "Campos necessários: saldo, date, id_instituicao",
     });
 
   const { id } = req.params;
@@ -83,7 +97,7 @@ const putOne = async (req, res) => {
     {
       where: {
         id_conta: id,
-        id_users,
+        id_users: req.id,
       },
     }
   )
@@ -99,6 +113,7 @@ const deleteOne = async (req, res) => {
   await Contas.destroy({
     where: {
       id_conta: id,
+      id_users: req.id,
     },
   })
     .then((data) => res.json(data))
@@ -120,17 +135,33 @@ const getSaldoAtualPrevisto = async (req, res) => {
       "id_instituicao",
       [
         Sequelize.literal(`SUM(
-            CASE WHEN "Contas"."date" <= '${date}' THEN saldo ELSE 0 END
+            CASE WHEN "Contas"."date" <= '${date}' 
+            AND "Contas".id_users = '${req.id}'
+            THEN saldo ELSE 0 END
             )
             +
             (
               SELECT COALESCE(SUM(
                   CASE WHEN "Transactions".date <= '${lastDateOfMonth(date)}'
-                  AND "Transactions".id_conta = "Contas".id_conta THEN valor ELSE 0 END
+                  AND "Transactions".id_conta = "Contas".id_conta 
+                  AND "Transactions".id_users = '${req.id}'
+                  THEN valor ELSE 0 END
               ),0) as saldo_contas FROM "Transactions"
           )
             `),
         "saldo_atual",
+      ],
+      [
+        Sequelize.literal(`
+            (SELECT ABS(COALESCE(SUM(
+              CASE WHEN "Transactions".date <= '${lastDateOfMonth(date)}'
+              AND "Transactions".id_conta = "Contas".id_conta 
+              AND "Transactions".id_users = '${req.id}'
+              AND "Transactions".objetivo = true 
+              THEN valor ELSE 0 END
+            ),0)) FROM "Transactions")
+            `),
+        "saldo_objetivo",
       ],
     ],
     include: [
@@ -147,6 +178,7 @@ const getSaldoAtualPrevisto = async (req, res) => {
       id_cartao: {
         [Sequelize.Op.eq]: null,
       },
+      id_users: req.id,
     },
     order: [[Sequelize.literal("saldo_atual DESC")]],
     group: ["id_conta", "instituicao.id_instituicao"],
@@ -157,31 +189,48 @@ const getSaldoAtualPrevisto = async (req, res) => {
 };
 
 const getContasCartoes = async (req, res) => {
-  await Contas.findAll({
-    attributes: ["id_conta", "saldo", "date", "id_instituicao", "id_cartao"],
-    include: [
-      {
-        model: Instituicoes,
-        attributes: ["nome", "cor", "icone"],
-        as: "instituicao",
-      },
-      {
-        model: Cartoes,
-        attributes: ["limite", "vencimento", "fechamento"],
-        as: "cartao",
-      },
-    ],
-    where: {
-      contaObjetivo: {
-        [Sequelize.Op.ne]: true,
-      },
+  const { contaObjetivo } = req.query;
+
+  let contaObjetivoObj = { contaObjetivo: { [Sequelize.Op.ne]: true } };
+  if (contaObjetivo !== undefined) contaObjetivoObj = {};
+
+  let group = [
+    "Contas.id_cartao",
+    "Contas.id_conta",
+    "instituicao.id_instituicao",
+    "cartao.id_cartao",
+  ];
+  if (contaObjetivo !== undefined) group.push("Objetivos.id_objetivo");
+
+  let include = [
+    {
+      model: Instituicoes,
+      attributes: ["nome", "cor", "icone"],
+      as: "instituicao",
     },
-    group: [
-      "Contas.id_cartao",
-      "Contas.id_conta",
-      "instituicao.id_instituicao",
-      "cartao.id_cartao",
+    {
+      model: Cartoes,
+      attributes: ["limite", "vencimento", "fechamento"],
+      as: "cartao",
+    },
+  ];
+  if (contaObjetivo !== undefined) include.push({ model: Objetivos });
+
+  await Contas.findAll({
+    attributes: [
+      "id_conta",
+      "saldo",
+      "date",
+      "id_instituicao",
+      "id_cartao",
+      "contaObjetivo",
     ],
+    include,
+    where: {
+      ...contaObjetivoObj,
+      id_users: req.id,
+    },
+    group,
   })
     .then((data) => res.json(data))
     .catch((err) => res.status(204).json(err));

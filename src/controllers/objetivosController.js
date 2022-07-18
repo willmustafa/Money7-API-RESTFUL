@@ -2,6 +2,7 @@ const Objetivos = require("../models/ObjetivosModel");
 const Categorias = require("../models/CategoriasModel");
 const Contas = require("../models/ContasModel");
 const sequelize = require("sequelize");
+const Instituicoes = require("../models/InstituicoesModel");
 
 const getAll = async (req, res) => {
   const date = req.query.date
@@ -21,7 +22,9 @@ const getAll = async (req, res) => {
       [
         sequelize.literal(`(
       SELECT COALESCE(SUM(
-          CASE WHEN ${date} "Transactions".id_conta = "Objetivos".id_conta THEN valor ELSE 0 END
+          CASE WHEN ${date} "Transactions".id_conta = "Objetivos".id_conta 
+          AND "Transactions".id_users = '${req.id}'
+          THEN valor ELSE 0 END
       ),0) as saldo_contas FROM "Transactions"
     )`),
         "saldo_atual",
@@ -34,6 +37,9 @@ const getAll = async (req, res) => {
         as: "categoria",
       },
     ],
+    where: {
+      id_users: req.id,
+    },
     order: [["date", "ASC"]],
   })
     .then((data) => res.json(data))
@@ -62,33 +68,45 @@ const getOne = async (req, res) => {
         as: "categoria",
       },
     ],
+    where: {
+      id_users: req.id,
+    },
   })
     .then((data) => res.json(data))
     .catch((err) => res.status(204).json(err));
 };
 
 const setOne = async (req, res) => {
-  const { titulo, cor, valor, id_users, date, description, id_categoria } =
-    req.body;
-  if (
-    !titulo ||
-    !cor ||
-    !valor ||
-    !id_users ||
-    !date ||
-    !description ||
-    !id_categoria
-  )
+  console.log(req.body);
+  const { titulo, cor, valor, date, description, id_categoria } = req.body;
+  if (!titulo || !cor || !valor || !date || !id_categoria)
     return res.status(400).json({
-      message:
-        "Campos necessários: titulo, cor, valor, id_users, date, description, id_categoria",
+      message: "Campos necessários: titulo, cor, valor, date, id_categoria",
     });
+
+  let id_instituicao = "";
+  await Instituicoes.findOne({
+    attributes: ["id_instituicao"],
+    where: {
+      nome: "Objetivo",
+    },
+  }).then(async (data) => {
+    if (data) id_instituicao = data.dataValues.id_instituicao;
+    if (!data)
+      await Instituicoes.create({
+        nome: "Objetivo",
+        cor: "bg-info",
+        icone: "icon-none",
+      }).then((dataI) => {
+        if (dataI) id_instituicao = dataI.dataValues.id_instituicao;
+      });
+  });
 
   await Contas.create({
     saldo: 0,
-    id_instituicao: 9999,
+    id_instituicao,
     contaObjetivo: true,
-    id_users,
+    id_users: req.id,
   })
     .then(async (data) => {
       await Objetivos.create({
@@ -99,7 +117,7 @@ const setOne = async (req, res) => {
         description,
         id_categoria,
         id_conta: data.dataValues.id_conta,
-        id_users,
+        id_users: req.id,
       })
         .then((data) => res.json(data))
         .catch((err) => res.status(204).json(err));
@@ -109,20 +127,11 @@ const setOne = async (req, res) => {
 };
 
 const putOne = async (req, res) => {
-  const { titulo, cor, valor, id_users, date, description, id_categoria } =
-    req.body;
-  if (
-    !titulo ||
-    !cor ||
-    !valor ||
-    !id_users ||
-    !date ||
-    !description ||
-    !id_categoria
-  )
+  const { titulo, cor, valor, date, description, id_categoria } = req.body;
+  if (!titulo || !cor || !valor || !date || !id_categoria)
     return res.status(400).json({
       message:
-        "Campos necessários: titulo, cor, valor, id_users, date, description, id_categoria",
+        "Campos necessários: titulo, cor, valor, date, description, id_categoria",
     });
 
   const { id } = req.params;
@@ -141,7 +150,7 @@ const putOne = async (req, res) => {
     {
       where: {
         id_objetivo: id,
-        id_users,
+        id_users: req.id,
       },
     }
   )
@@ -157,6 +166,7 @@ const deleteOne = async (req, res) => {
   await Objetivos.destroy({
     where: {
       id_objetivo: id,
+      id_users: req.id,
     },
   })
     .then((data) => res.json(data))
