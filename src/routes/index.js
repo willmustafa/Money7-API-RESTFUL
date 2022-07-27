@@ -8,6 +8,7 @@ const instituicoesRoute = require("./instituicoes");
 const transacoesFiltradasRoute = require("./transacoesFiltradas");
 const contasFiltradasRoute = require("./contasFiltradas");
 const importRoute = require("./import");
+const tagsRoute = require("./tags");
 const scrapper = require("./scrapper");
 const verifyJWT = require("../controllers/verifyJWT");
 
@@ -29,4 +30,5 @@ module.exports = function (app) {
   app.use("/instituicoes", instituicoesRoute);
   app.use("/scrapper", scrapper);
   app.use("/import", importRoute);
+  app.use("/tags", tagsRoute);
 };

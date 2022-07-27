@@ -10,7 +10,8 @@
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
     "test": "jest",
-    "swagger-autogen": "node ./src/swagger.js"
+    "swagger-autogen": "node ./src/swagger.js",
+    "reset-pm2": "pm2 reload Money7-API"
   },
   "author": "willian f mustafa <willianfmustafa@gmail.com>",
   "license": "ISC",

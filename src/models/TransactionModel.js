@@ -3,6 +3,7 @@ const database = require("../database");
 const Categorias = require("./CategoriasModel");
 const Contas = require("./ContasModel");
 const Users = require("./UsersModel");
+const Tags = require("./TagsModel");
 
 const Transactions = database.define("Transactions", {
   id: {
@@ -49,6 +50,13 @@ Transactions.belongsTo(Categorias, {
   as: "categoria",
 });
 Categorias.hasMany(Transactions, { foreignKey: "id_categoria" });
+
+Transactions.belongsTo(Tags, {
+  constraint: true,
+  foreignKey: "id_tag",
+  as: "tag",
+});
+Tags.hasMany(Transactions, { foreignKey: "id_tag" });
 
 Transactions.belongsTo(Users, {
   constraint: true,

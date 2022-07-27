@@ -10,6 +10,7 @@ const instituicoes = require("./InstituicoesModel");
 const objetivos = require("./ObjetivosModel");
 const transactions = require("./TransactionModel");
 const users = require("./UsersModel");
+const tags = require("./TagsModel");
 
 module.exports = {
   cartoes,
@@ -19,4 +20,5 @@ module.exports = {
   objetivos,
   transactions,
   users,
+  tags,
 };

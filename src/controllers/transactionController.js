@@ -15,6 +15,8 @@ const getAll = async (req, res) => {
     .query(
       `SELECT "Transactions"."id", "Transactions"."valor", "Transactions"."descricao", 
 	"Transactions"."date", "categoria"."id_categoria" AS "categoria.id_categoria",
+  "Transactions"."id_tag",
+  "tag"."nome" AS "tag_nome",
 	"objetivo".titulo,
 	"objetivo".id_categoria,
 	"objetivo".cor, 
@@ -29,6 +31,7 @@ const getAll = async (req, res) => {
 	"conta->instituicao"."cor" AS "conta.instituicao.cor", 
 	"conta->instituicao"."icone" AS "conta.instituicao.icone" FROM "Transactions" AS "Transactions" 
 	LEFT OUTER JOIN "Categorias" AS "categoria" ON "Transactions"."id_categoria" = "categoria"."id_categoria" 
+  LEFT OUTER JOIN "Tags" as "tag" ON "Transactions"."id_tag" = "tag"."id"
 	LEFT OUTER JOIN "Contas" AS "conta" ON "Transactions"."id_conta" = "conta"."id_conta" 
 	LEFT OUTER JOIN "Instituicoes" AS "conta->instituicao" ON "conta"."id_instituicao" = "conta->instituicao"."id_instituicao"
 	LEFT OUTER JOIN "Objetivos" AS "objetivo" ON "objetivo".id_conta = "Transactions".id_conta
@@ -76,9 +79,16 @@ const getOne = async (req, res) => {
 };
 
 const setOne = async (req, res) => {
-  console.log(req.body);
-  let { status, id_conta, valor, date, descricao, id_categoria, id_conta2 } =
-    req.body;
+  let {
+    status,
+    id_conta,
+    valor,
+    date,
+    descricao,
+    id_categoria,
+    id_conta2,
+    tag,
+  } = req.body;
   // if (!id_conta || valor !== undefined || !date || !descricao || !id_categoria)
   //   return res.status(400).json({
   //     message:
@@ -109,7 +119,7 @@ const setOne = async (req, res) => {
           }).then((dataC) => (id_categoria = dataC.dataValues.id_categoria));
       });
 
-    await Transactions.create({
+    let dados = {
       valor,
       descricao,
       date,
@@ -117,7 +127,11 @@ const setOne = async (req, res) => {
       id_conta,
       id_categoria,
       id_users: req.id,
-    })
+    };
+
+    if (tag) dados.id_tag = tag;
+
+    await Transactions.create(dados)
       .then((data) => res.json(data))
       .catch((error) => res.status(204).json(error));
   }
@@ -176,7 +190,8 @@ const createTransferencia = async (req, res) => {
 };
 
 const putOne = async (req, res) => {
-  const { status, id_conta, valor, date, descricao, id_categoria } = req.body;
+  const { status, id_conta, valor, date, descricao, id_categoria, tag } =
+    req.body;
   if (!status || !id_conta || !valor || !date || !descricao || !id_categoria)
     return res.status(400).json({
       message:
@@ -195,6 +210,7 @@ const putOne = async (req, res) => {
       status,
       id_conta,
       id_categoria,
+      id_tag: tag ? tag : null,
     },
     {
       where: {
