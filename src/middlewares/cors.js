@@ -4,6 +4,7 @@ const whitelist = [
   "http://localhost:8080",
   "http://localhost:3000",
   "https://money7-989.pages.dev",
+  "http://money.internal",
 ];
 
 module.exports = function (app) {

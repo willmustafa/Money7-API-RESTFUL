@@ -1,4 +1,5 @@
 const Categorias = require("../models/CategoriasModel");
+const Sequelize = require("sequelize");
 
 const getAll = async (req, res) => {
   await Categorias.findAll({
@@ -31,6 +32,18 @@ const setOne = async (req, res) => {
     return res.status(400).json({
       message: "Campos necessários: nome, cor, icone, tipo",
     });
+
+  const existentes = await Categorias.findAll({
+    where: {
+      nome: {
+        [Sequelize.Op.iLike]: nome,
+      },
+    },
+  });
+
+  if (existentes.length > 0) {
+    return res.status(400).json({ message: "Já existe" });
+  }
 
   await Categorias.create({
     nome,

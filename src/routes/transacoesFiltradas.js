@@ -12,5 +12,6 @@ router.get(
 router.get("/despesaCategoria", transactionController.getDespesaCategoria);
 router.get("/receitaCategoria", transactionController.getReceitaCategoria);
 router.get("/pendencias", transactionController.getPendencias);
+router.get("/desempenho", transactionController.getDesempenho);
 
 module.exports = router;

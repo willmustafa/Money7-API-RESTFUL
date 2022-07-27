@@ -3,11 +3,10 @@ const Categorias = require("../models/CategoriasModel");
 const Contas = require("../models/ContasModel");
 const sequelize = require("sequelize");
 const Instituicoes = require("../models/InstituicoesModel");
+const { Sequelize } = require("sequelize");
 
 const getAll = async (req, res) => {
-  const date = req.query.date
-    ? `"Transactions".date <= '${req.query.date}' AND`
-    : "";
+  const limit = req.query.limit ? req.query.limit : 100;
 
   await Objetivos.findAll({
     attributes: [
@@ -22,12 +21,22 @@ const getAll = async (req, res) => {
       [
         sequelize.literal(`(
       SELECT COALESCE(SUM(
-          CASE WHEN ${date} "Transactions".id_conta = "Objetivos".id_conta 
+          CASE WHEN "Transactions".id_conta = "Objetivos".id_conta 
           AND "Transactions".id_users = '${req.id}'
           THEN valor ELSE 0 END
       ),0) as saldo_contas FROM "Transactions"
     )`),
         "saldo_atual",
+      ],
+      [
+        sequelize.literal(`(
+      SELECT COALESCE(SUM(
+          CASE WHEN "Transactions".id_conta = "Objetivos".id_conta 
+          AND "Transactions".id_users = '${req.id}'
+          THEN valor ELSE 0 END
+      ),0) as saldo_contas FROM "Transactions"
+    ) - valor_total`),
+        "diferenca",
       ],
     ],
     include: [
@@ -40,7 +49,8 @@ const getAll = async (req, res) => {
     where: {
       id_users: req.id,
     },
-    order: [["date", "ASC"]],
+    order: [[Sequelize.literal('"diferenca" ASC')], ["date", "ASC"]],
+    limit,
   })
     .then((data) => res.json(data))
     .catch((err) => res.status(204).json(err));
@@ -79,10 +89,6 @@ const getOne = async (req, res) => {
 const setOne = async (req, res) => {
   console.log(req.body);
   const { titulo, cor, valor, date, description, id_categoria } = req.body;
-  if (!titulo || !cor || !valor || !date || !id_categoria)
-    return res.status(400).json({
-      message: "Campos necessários: titulo, cor, valor, date, id_categoria",
-    });
 
   let id_instituicao = "";
   await Instituicoes.findOne({
