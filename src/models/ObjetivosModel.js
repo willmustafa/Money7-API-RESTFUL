@@ -32,6 +32,9 @@ const Objetivos = database.define("Objetivos", {
     type: Sequelize.TEXT,
     allowNull: true,
   },
+  status: {
+    type: Sequelize.STRING,
+  },
 });
 
 Objetivos.belongsTo(Categorias, {

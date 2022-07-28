@@ -6,13 +6,17 @@ const Instituicoes = require("../models/InstituicoesModel");
 const { Sequelize } = require("sequelize");
 
 const getAll = async (req, res) => {
-  const limit = req.query.limit ? req.query.limit : 100;
+  let { limit, status } = req.query;
+  limit = limit ? limit : 100;
+
+  if (status == undefined) status = "ativado";
 
   await Objetivos.findAll({
     attributes: [
       "id_objetivo",
       "titulo",
       "cor",
+      "status",
       "valor_total",
       "date",
       "id_categoria",
@@ -48,6 +52,7 @@ const getAll = async (req, res) => {
     ],
     where: {
       id_users: req.id,
+      status,
     },
     order: [[Sequelize.literal('"diferenca" ASC')], ["date", "ASC"]],
     limit,
@@ -87,7 +92,6 @@ const getOne = async (req, res) => {
 };
 
 const setOne = async (req, res) => {
-  console.log(req.body);
   const { titulo, cor, valor, date, description, id_categoria } = req.body;
 
   let id_instituicao = "";
@@ -122,6 +126,7 @@ const setOne = async (req, res) => {
         date,
         description,
         id_categoria,
+        status: true,
         id_conta: data.dataValues.id_conta,
         id_users: req.id,
       })
@@ -144,6 +149,8 @@ const putOne = async (req, res) => {
   if (!id)
     return res.status(400).json({ message: "O id deve ser passado na url." });
 
+  let { status } = req.body;
+  console.log(status);
   await Objetivos.update(
     {
       titulo,
@@ -151,6 +158,7 @@ const putOne = async (req, res) => {
       valor_total: valor,
       description,
       date,
+      status,
       id_categoria,
     },
     {
