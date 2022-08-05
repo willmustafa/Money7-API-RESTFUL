@@ -21,7 +21,7 @@ const Transactions = database.define("Transactions", {
     allowNull: false,
   },
   date: {
-    type: Sequelize.DATEONLY,
+    type: Sequelize.DATE,
     allowNull: false,
     defaultValue: Sequelize.NOW,
   },
@@ -34,6 +34,9 @@ const Transactions = database.define("Transactions", {
     type: Sequelize.BOOLEAN,
     allowNull: false,
     defaultValue: false,
+  },
+  id_banco_transferencia: {
+    type: Sequelize.UUID,
   },
 });
 

@@ -157,7 +157,6 @@ const getSaldoAtualPrevisto = async (req, res) => {
               CASE WHEN "Transactions".date <= '${lastDateOfMonth(date)}'
               AND "Transactions".id_conta = "Contas".id_conta 
               AND "Transactions".id_users = '${req.id}'
-              AND "Transactions".objetivo = true 
               THEN valor ELSE 0 END
             ),0)) FROM "Transactions")
             `),

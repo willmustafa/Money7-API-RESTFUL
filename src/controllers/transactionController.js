@@ -140,6 +140,9 @@ const setOne = async (req, res) => {
 const createTransferencia = async (req, res) => {
   let { status, id_conta, valor, date, id_conta2 } = req.body;
 
+  const timeNow = new Date().toLocaleTimeString("pt-BR");
+  date = new Date(`${date}T${timeNow}Z`).toISOString();
+
   let categorias = await Categorias.findAll({
     attributes: ["id_categoria", "nome"],
     where: {
@@ -190,7 +193,7 @@ const createTransferencia = async (req, res) => {
 };
 
 const putOne = async (req, res) => {
-  const { status, id_conta, valor, date, descricao, id_categoria, tag } =
+  let { status, id_conta, valor, date, descricao, id_categoria, tag } =
     req.body;
   if (!status || !id_conta || !valor || !date || !descricao || !id_categoria)
     return res.status(400).json({
@@ -201,6 +204,9 @@ const putOne = async (req, res) => {
   const { id } = req.params;
   if (!id)
     return res.status(400).json({ message: "O id deve ser passado na url." });
+
+  const timeNow = new Date().toLocaleTimeString("pt-BR");
+  date = new Date(`${date}T${timeNow}Z`).toISOString();
 
   await Transactions.update(
     {
@@ -269,6 +275,7 @@ const getSomaMes = async (req, res) => {
               AND "Transactions".id_users = '${req.id}' 
               AND "Transactions".objetivo = false
               AND "Transactions".descricao <> 'Pagamento de fatura' 
+              AND "Transactions".descricao <> 'Transferência' 
               THEN valor ELSE 0 END
               ) as last_m_sum FROM "Transactions") as last_m
               on last_m IS NOT NULL
@@ -280,6 +287,7 @@ const getSomaMes = async (req, res) => {
               AND "Transactions".descricao <> 'Pagamento de fatura' 
               AND "Transactions".objetivo = false
               AND "Transactions".id_users = '${req.id}' 
+              AND "Transactions".descricao <> 'Transferência' 
               THEN valor ELSE 0 END
               ) as cur_sum FROM "Transactions") as cur
               on cur IS NOT NULL
@@ -310,6 +318,7 @@ const getSomaMes = async (req, res) => {
                           AND "Transactions".descricao <> 'Pagamento de fatura' 
                           AND "Transactions".id_categoria NOT IN (SELECT id_categoria FROM "Categorias" WHERE tipo = 'Não Contabilizar')
                           AND "Transactions".id_users = '${req.id}' 
+                          AND "Transactions".descricao <> 'Transferência' 
                               THEN valor ELSE 0 END
                               ) as last_m_sum FROM "Transactions") as last_m
                               on last_m IS NOT NULL
@@ -321,6 +330,7 @@ const getSomaMes = async (req, res) => {
                           AND "Transactions".id_users = '${req.id}' 
                           AND "Transactions".objetivo = false
                           AND "Transactions".descricao <> 'Pagamento de fatura' 
+                          AND "Transactions".descricao <> 'Transferência' 
                               THEN valor ELSE 0 END
                               ) as cur_sum FROM "Transactions") as cur
                               on cur IS NOT NULL
@@ -348,6 +358,7 @@ const getSomaMes = async (req, res) => {
           )}') 
           AND "Transactions".id_users = '${req.id}' 
           AND "Transactions".objetivo = false
+          AND "Transactions".descricao <> 'Transferência' 
           AND "Transactions".descricao <> 'Pagamento de fatura' 
           AND "Transactions".id_categoria NOT IN (SELECT id_categoria FROM "Categorias" WHERE tipo = 'Não Contabilizar')
 					THEN valor ELSE 0 END
@@ -359,6 +370,7 @@ const getSomaMes = async (req, res) => {
           AND "Transactions".id_categoria NOT IN (SELECT id_categoria FROM "Categorias" WHERE tipo = 'Não Contabilizar')
           AND "Transactions".id_users = '${req.id}' 
           AND "Transactions".objetivo = false
+          AND "Transactions".descricao <> 'Transferência' 
           AND "Transactions".descricao <> 'Pagamento de fatura' 
 					THEN valor ELSE 0 END
 					) as cur_sum FROM "Transactions") as cur
@@ -373,6 +385,7 @@ const getSomaMes = async (req, res) => {
       AND "Transactions".id_conta not in (SELECT id_conta FROM "Objetivos")
       AND "Transactions".id_users = '${req.id}' 
       AND "Transactions".objetivo = false
+      AND "Transactions".descricao <> 'Transferência' 
       AND "Transactions".id_categoria NOT IN (SELECT id_categoria FROM "Categorias" WHERE tipo = 'Não Contabilizar')
       THEN valor ELSE 0 END)`),
         "receita",
@@ -383,6 +396,7 @@ const getSomaMes = async (req, res) => {
       AND "Transactions".id_users = '${req.id}' 
       AND "Transactions".objetivo = false
       AND "Transactions".descricao <> 'Pagamento de fatura' 
+      AND "Transactions".descricao <> 'Transferência' 
       AND "Transactions".id_categoria NOT IN (SELECT id_categoria FROM "Categorias" WHERE tipo = 'Não Contabilizar')
       AND "Transactions".id_conta not in (SELECT id_conta FROM "Objetivos") THEN valor ELSE 0 END))`),
         "despesa",
@@ -393,6 +407,7 @@ const getSomaMes = async (req, res) => {
               AND date_part('year', "Transactions".date) = date_part('year', timestamp '${date}') 
               AND "Transactions".id_users = '${req.id}' 
               AND "Transactions".objetivo = false 
+              AND "Transactions".descricao <> 'Transferência' 
               AND "Transactions".descricao <> 'Pagamento de fatura' 
               AND "Transactions".id_categoria NOT IN (SELECT id_categoria FROM "Categorias" WHERE tipo = 'Não Contabilizar')
               AND "Transactions".id_conta not in (SELECT id_conta FROM "Objetivos") THEN valor ELSE 0 END
@@ -412,6 +427,7 @@ const getSomaMes = async (req, res) => {
               "Transactions".id_conta not in (SELECT id_conta FROM "Contas" WHERE "Contas"."id_cartao" IS NOT NULL)
               AND "Transactions".id_users = '${req.id}' 
               AND "Transactions".objetivo = false
+              AND "Transactions".descricao <> 'Transferência' 
               THEN valor ELSE 0 END
           ),0) as saldo_contas FROM "Transactions"
       )`),
@@ -448,7 +464,15 @@ const getBalancoMensal = async (req, res) => {
         },
         {
           descricao: {
-            [Sequelize.Op.ne]: "Pagamento de fatura",
+            [Sequelize.Op.and]: {
+              [Sequelize.Op.ne]: "Pagamento de fatura",
+              [Sequelize.Op.ne]: "Transferência",
+            },
+          },
+        },
+        {
+          descricao: {
+            [Sequelize.Op.ne]: "Transferência",
           },
         },
         {
@@ -525,7 +549,10 @@ const getGastosReceitasMensal = async (req, res) => {
         },
         {
           descricao: {
-            [Sequelize.Op.ne]: "Pagamento de fatura",
+            [Sequelize.Op.and]: {
+              [Sequelize.Op.ne]: "Pagamento de fatura",
+              [Sequelize.Op.ne]: "Transferência",
+            },
           },
         },
         {
@@ -594,7 +621,10 @@ const getDespesaCategoria = async (req, res) => {
     where: {
       id_users: req.id,
       descricao: {
-        [Sequelize.Op.ne]: "Pagamento de fatura",
+        [Sequelize.Op.and]: {
+          [Sequelize.Op.ne]: "Pagamento de fatura",
+          [Sequelize.Op.ne]: "Transferência",
+        },
       },
       id_categoria: {
         [Sequelize.Op.notIn]: Sequelize.literal(
@@ -643,7 +673,10 @@ const getReceitaCategoria = async (req, res) => {
     where: {
       id_users: req.id,
       descricao: {
-        [Sequelize.Op.ne]: "Pagamento de fatura",
+        [Sequelize.Op.and]: {
+          [Sequelize.Op.ne]: "Pagamento de fatura",
+          [Sequelize.Op.ne]: "Transferência",
+        },
       },
       id_categoria: {
         [Sequelize.Op.notIn]: Sequelize.literal(

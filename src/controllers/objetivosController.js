@@ -126,7 +126,7 @@ const setOne = async (req, res) => {
         date,
         description,
         id_categoria,
-        status: true,
+        status: "ativado",
         id_conta: data.dataValues.id_conta,
         id_users: req.id,
       })
@@ -150,7 +150,8 @@ const putOne = async (req, res) => {
     return res.status(400).json({ message: "O id deve ser passado na url." });
 
   let { status } = req.body;
-  console.log(status);
+  if (!status) status = "ativado";
+
   await Objetivos.update(
     {
       titulo,
