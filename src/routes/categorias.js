@@ -1,12 +1,18 @@
 const express = require("express");
 
 const router = express.Router();
-const categoriasController = require("../controllers/categoriasController");
+const {
+  createOne,
+  deleteById,
+  getAll,
+  getById,
+  updateById,
+} = require("../controllers/categorias");
 
-router.get("/", categoriasController.getAll);
-router.get("/:id", categoriasController.getOne);
-router.post("/", categoriasController.setOne);
-router.put("/:id", categoriasController.putOne);
-router.delete("/:id", categoriasController.deleteOne);
+router.get("/", getAll);
+router.get("/:id", getById);
+router.post("/", createOne);
+router.put("/:id", updateById);
+router.delete("/:id", deleteById);
 
 module.exports = router;
