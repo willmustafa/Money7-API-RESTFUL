@@ -1,9 +1,9 @@
 const ofx = require("ofx-convertjs");
 const path = require("path");
 const Categorias = require("../models/CategoriasModel");
-const NubankOfx = require("../models/Parser/nubank-ofx");
+const bankOfx = require("../models/Parser/bankOfx");
 const Transactions = require("../models/TransactionModel");
-const nubankOfx_parser = new NubankOfx();
+const bankOfx_parser = new bankOfx();
 
 const importFromFile = async (req, res) => {
   const { id_conta, excluir } = req.body;
@@ -31,7 +31,7 @@ const importFromFile = async (req, res) => {
           if (!Array.isArray(transactionArr)) transactionArr = [transactionArr];
 
           for await (const transaction of transactionArr) {
-            const parsedTransaction = nubankOfx_parser.handle(transaction);
+            const parsedTransaction = bankOfx_parser.handle(transaction);
             parsedTransaction.id_conta = id_conta;
             parsedTransaction.id_categoria = semCategoria.id_categoria;
             parsedTransaction.id_users = req.id;
