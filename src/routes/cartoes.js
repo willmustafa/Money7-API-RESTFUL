@@ -1,12 +1,18 @@
 const express = require("express");
 
 const router = express.Router();
-const cartoesController = require("../controllers/cartoesController");
+const {
+  createOne,
+  deleteById,
+  getAll,
+  getById,
+  updateById,
+} = require("../controllers/cartoes");
 
-router.get("/", cartoesController.getAll);
-router.get("/:id", cartoesController.getOne);
-router.post("/", cartoesController.setOne);
-router.put("/:id", cartoesController.putOne);
-router.delete("/:id", cartoesController.deleteOne);
+router.get("/", getAll);
+router.get("/:id", getById);
+router.post("/", createOne);
+router.put("/:id", updateById);
+router.delete("/:id", deleteById);
 
 module.exports = router;
