@@ -15,6 +15,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 require("./middlewares/cors")(app);
 app.use(cookieParser());
+app.use(require("sanitize").middleware);
 
 // INIT
 if (process.env.NODE_ENV !== "test") {

@@ -27,7 +27,11 @@ const getOne = async (req, res) => {
 };
 
 const setOne = async (req, res) => {
-  const { nome, cor, icone, tipo } = req.body;
+  let nome = req.bodyString("nome").toLowerCase();
+  let cor = req.bodyString("cor").toLowerCase();
+  let icone = req.bodyString("icone").toLowerCase();
+  let tipo = req.bodyString("tipo").toLowerCase();
+
   if (!nome || !cor || !icone || !tipo)
     return res.status(400).json({
       message: "Campos necessários: nome, cor, icone, tipo",
@@ -58,7 +62,11 @@ const setOne = async (req, res) => {
 };
 
 const putOne = async (req, res) => {
-  const { nome, cor, icone, tipo } = req.body;
+  let nome = req.bodyString("nome").toLowerCase();
+  let cor = req.bodyString("cor").toLowerCase();
+  let icone = req.bodyString("icone").toLowerCase();
+  let tipo = req.bodyString("tipo").toLowerCase();
+
   if (!nome || !cor || !icone || !tipo)
     return res.status(400).json({
       message: "Campos necessários: nome, cor, icone, tipo",
