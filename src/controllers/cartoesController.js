@@ -4,7 +4,7 @@ const Contas = require("../models/ContasModel");
 const sequelize = require("sequelize");
 
 const getAll = async (req, res) => {
-  const { date } = req.query;
+  const date = req.queryString("date");
   if (!date)
     return res.status(400).json({ message: "Campo date é necessário." });
 
@@ -49,7 +49,7 @@ const getAll = async (req, res) => {
 };
 
 const getOne = async (req, res) => {
-  const { id } = req.params;
+  const id = req.paramString("id");
   if (!id)
     return res.status(400).json({ message: "O id deve ser passado na url." });
 
@@ -59,7 +59,11 @@ const getOne = async (req, res) => {
 };
 
 const setOne = async (req, res) => {
-  const { vencimento, fechamento, limite, id_instituicao } = req.body;
+  let vencimento = req.bodyString("vencimento");
+  let fechamento = req.bodyInt("fechamento");
+  let limite = req.bodyInt("limite");
+  let id_instituicao = req.bodyString("id_instituicao");
+
   if (!vencimento || !fechamento || !limite || !id_instituicao)
     return res.status(400).json({
       message:
@@ -86,14 +90,19 @@ const setOne = async (req, res) => {
 };
 
 const putOne = async (req, res) => {
-  const { vencimento, fechamento, limite, id_instituicao } = req.body;
+  let vencimento = req.bodyString("vencimento");
+  let fechamento = req.bodyInt("fechamento");
+  let limite = req.bodyInt("limite");
+  let id_instituicao = req.bodyString("id_instituicao");
+
   if (!vencimento || !fechamento || !limite || !id_instituicao)
     return res.status(400).json({
       message:
         "Campos necessários: vencimento, fechamento, limite, id_instituicao",
     });
 
-  const { id } = req.params;
+  const id = req.paramString("id");
+
   if (!id)
     return res.status(400).json({
       message: "O id deve ser passado na url.",
@@ -118,7 +127,7 @@ const putOne = async (req, res) => {
 };
 
 const deleteOne = async (req, res) => {
-  const { id } = req.params;
+  const id = req.paramString("id");
   if (!id)
     return res.status(400).json({
       message: "O id deve ser passado na url.",

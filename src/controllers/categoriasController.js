@@ -13,7 +13,7 @@ const getAll = async (req, res) => {
 };
 
 const getOne = async (req, res) => {
-  const { id } = req.params;
+  const id = req.paramString("id");
   if (!id)
     return res.status(400).json({ message: "O id deve ser passado na url." });
 
@@ -72,7 +72,7 @@ const putOne = async (req, res) => {
       message: "Campos necessários: nome, cor, icone, tipo",
     });
 
-  const { id } = req.params;
+  const id = req.paramString("id");
   if (!id)
     return res.status(400).json({ message: "O id deve ser passado na url." });
 
@@ -95,7 +95,7 @@ const putOne = async (req, res) => {
 };
 
 const deleteOne = async (req, res) => {
-  const { id } = req.params;
+  const id = req.paramString("id");
   if (!id)
     return res.status(400).json({ message: "O id deve ser passado na url." });
 
