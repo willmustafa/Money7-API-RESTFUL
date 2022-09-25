@@ -1,12 +1,18 @@
 const express = require("express");
 
 const router = express.Router();
-const contasController = require("../controllers/contasController");
+const {
+  createOne,
+  deleteById,
+  getAll,
+  getById,
+  updateById,
+} = require("../controllers/contas");
 
-router.get("/", contasController.getAll);
-router.get("/:id", contasController.getOne);
-router.post("/", contasController.setOne);
-router.put("/:id", contasController.putOne);
-router.delete("/:id", contasController.deleteOne);
+router.get("/", getAll);
+router.get("/:id", getById);
+router.post("/", createOne);
+router.put("/:id", updateById);
+router.delete("/:id", deleteById);
 
 module.exports = router;

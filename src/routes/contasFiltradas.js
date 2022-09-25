@@ -1,9 +1,12 @@
 const express = require("express");
 
 const router = express.Router();
-const contasController = require("../controllers/contasController");
+const {
+  saldoAtualePrevisto,
+  contaseCartoes,
+} = require("../controllers/contas");
 
-router.get("/saldoAtualPrevisto", contasController.getSaldoAtualPrevisto);
-router.get("/contasCartoes", contasController.getContasCartoes);
+router.get("/saldoAtualPrevisto", saldoAtualePrevisto);
+router.get("/contasCartoes", contaseCartoes);
 
 module.exports = router;
