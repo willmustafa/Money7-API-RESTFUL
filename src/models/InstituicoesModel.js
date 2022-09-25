@@ -13,6 +13,14 @@ const Instituicoes = database.define("Instituicoes", {
     allowNull: false,
     defaultValue: "",
   },
+  razao_social: {
+    type: Sequelize.STRING,
+    allowNull: true,
+  },
+  cnpj: {
+    type: Sequelize.STRING,
+    allowNull: true,
+  },
   cor: {
     type: Sequelize.STRING,
     allowNull: true,
