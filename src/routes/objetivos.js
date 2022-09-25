@@ -1,12 +1,18 @@
 const express = require("express");
 
 const router = express.Router();
-const objetivosController = require("../controllers/objetivosController");
+const {
+  createOne,
+  deleteById,
+  getAll,
+  getById,
+  updateById,
+} = require("../controllers/objetivos");
 
-router.get("/", objetivosController.getAll);
-router.get("/:id", objetivosController.getOne);
-router.post("/", objetivosController.setOne);
-router.put("/:id", objetivosController.putOne);
-router.delete("/:id", objetivosController.deleteOne);
+router.get("/", getAll);
+router.get("/:id", getById);
+router.post("/", createOne);
+router.put("/:id", updateById);
+router.delete("/:id", deleteById);
 
 module.exports = router;
