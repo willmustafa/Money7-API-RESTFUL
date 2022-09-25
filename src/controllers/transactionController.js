@@ -164,7 +164,7 @@ const createTransferencia = async (req, res) => {
   });
 
   if (categorias.length == 2) {
-    await Transactions.create({
+    let transfEnviada = await Transactions.create({
       valor: valor * -1,
       descricao: "Transferência",
       date,
@@ -177,7 +177,8 @@ const createTransferencia = async (req, res) => {
       objetivo: contaObjetivo.length > 0 ? true : false,
     });
 
-    await Transactions.create({
+    let transfRecebida = await Transactions.create({
+      id_banco_transferencia: transfEnviada.id,
       valor,
       descricao: "Transferência",
       date,
@@ -188,7 +189,10 @@ const createTransferencia = async (req, res) => {
       )[0].id_categoria,
       id_users: req.id,
       objetivo: contaObjetivo.length > 0 ? true : false,
-    }).then((data) => res.json(data));
+    });
+
+    transfEnviada.id_banco_transferencia = transfRecebida.id;
+    await transfEnviada.save().then((data) => res.json(data));
   }
 };
 
@@ -233,6 +237,17 @@ const deleteOne = async (req, res) => {
   const { id } = req.params;
   if (!id)
     return res.status(400).json({ message: "O id deve ser passado na url." });
+
+  let instance = await Transactions.findByPk(id);
+
+  if (instance?.id_banco_transferencia) {
+    await Transactions.destroy({
+      where: {
+        id: instance.id_banco_transferencia,
+        id_users: req.id,
+      },
+    });
+  }
 
   await Transactions.destroy({
     where: {
@@ -418,6 +433,7 @@ const getSomaMes = async (req, res) => {
         Sequelize.literal(`(SELECT COALESCE(SUM(
         CASE WHEN "Contas"."contaObjetivo" = false 
         AND "Contas".id_cartao IS NULL
+        AND "Contas"."id_users" = '${req.id}'
         THEN saldo ELSE 0 END
         ),0) as saldo FROM "Contas")
         +

@@ -41,6 +41,7 @@ const getAll = async (req, res) => {
       id_cartao: {
         [sequelize.Op.ne]: null,
       },
+      id_users: req.id,
     },
   })
     .then((data) => res.json(data))

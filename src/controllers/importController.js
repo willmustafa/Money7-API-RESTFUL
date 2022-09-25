@@ -25,8 +25,12 @@ const importFromFile = async (req, res) => {
         const importedFile = ofx.toJson(fileFromBuffer);
 
         if (importedFile.OFX.BANKMSGSRSV1.BANKTRANLIST.STMTTRN) {
-          for await (const transaction of importedFile.OFX.BANKMSGSRSV1
-            .BANKTRANLIST.STMTTRN) {
+          let transactionArr =
+            importedFile.OFX.BANKMSGSRSV1.BANKTRANLIST.STMTTRN;
+
+          if (!Array.isArray(transactionArr)) transactionArr = [transactionArr];
+
+          for await (const transaction of transactionArr) {
             const parsedTransaction = nubankOfx_parser.handle(transaction);
             parsedTransaction.id_conta = id_conta;
             parsedTransaction.id_categoria = semCategoria.id_categoria;

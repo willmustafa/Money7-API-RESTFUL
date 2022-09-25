@@ -38,6 +38,7 @@ const setOne = async (req, res) => {
       nome: {
         [Sequelize.Op.iLike]: nome,
       },
+      id_users: req.id,
     },
   });
 
