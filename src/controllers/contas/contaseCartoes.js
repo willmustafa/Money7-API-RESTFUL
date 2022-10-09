@@ -8,7 +8,7 @@ const Instituicoes = require("../../models/InstituicoesModel");
 const Objetivos = require("../../models/ObjetivosModel");
 
 module.exports = async (req, res, next) => {
-  const contaObjetivo = req.queryString("contaObjetivo").toLowerCase();
+  const contaObjetivo = req.queryString("contaObjetivo")?.toLowerCase();
 
   let contaObjetivoObj = { contaObjetivo: { [Sequelize.Op.ne]: true } };
   if (contaObjetivo !== undefined) contaObjetivoObj = {};
