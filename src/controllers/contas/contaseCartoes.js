@@ -11,7 +11,6 @@ module.exports = async (req, res, next) => {
   const contaObjetivo = req.queryString("contaObjetivo")?.toLowerCase();
 
   let contaObjetivoObj = { contaObjetivo: { [Sequelize.Op.ne]: true } };
-  if (contaObjetivo !== undefined) contaObjetivoObj = {};
 
   let group = [
     "Contas.id_cartao",
@@ -19,7 +18,6 @@ module.exports = async (req, res, next) => {
     "instituicao.id_instituicao",
     "cartao.id_cartao",
   ];
-  if (contaObjetivo !== undefined) group.push("Objetivos.id_objetivo");
 
   let include = [
     {
@@ -33,7 +31,12 @@ module.exports = async (req, res, next) => {
       as: "cartao",
     },
   ];
-  if (contaObjetivo !== undefined) include.push({ model: Objetivos });
+
+  if (contaObjetivo !== undefined) {
+    contaObjetivoObj = {};
+    group.push("Objetivos.id_objetivo");
+    include.push({ model: Objetivos });
+  }
 
   try {
     await Contas.findAll({

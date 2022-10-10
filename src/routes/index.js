@@ -10,6 +10,7 @@ const contasFiltradasRoute = require("./contasFiltradas");
 const importRoute = require("./import");
 const tagsRoute = require("./tags");
 const verifyJWT = require("../controllers/verifyJWT");
+const TransacoesFuturas = require("./transacoesFuturas");
 
 module.exports = function (app) {
   app.get("/", async (req, res) => {
@@ -29,4 +30,5 @@ module.exports = function (app) {
   app.use("/instituicoes", instituicoesRoute);
   app.use("/import", importRoute);
   app.use("/tags", tagsRoute);
+  app.use("/transacoesFuturas", TransacoesFuturas);
 };

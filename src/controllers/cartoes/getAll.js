@@ -4,6 +4,7 @@ const { CREATED, BAD_REQUEST, INTERNAL_SERVER_ERROR } =
 const Cartoes = require("../../models/CartoesModel");
 const Instituicoes = require("../../models/InstituicoesModel");
 const Contas = require("../../models/ContasModel");
+const Transaction = require("../../models/TransactionModel");
 const sequelize = require("sequelize");
 
 module.exports = async (req, res, next) => {
@@ -20,14 +21,7 @@ module.exports = async (req, res, next) => {
         "id_instituicao",
         "id_cartao",
         [
-          sequelize.literal(`(
-          SELECT ABS(COALESCE(SUM(
-              CASE WHEN date_part('month', "Transactions".date) = date_part('month', timestamp '${date}') 
-              AND date_part('year', "Transactions".date) = date_part('year', timestamp '${date}')
-              AND "Transactions".id_users = '${req.id}'  
-              AND "Transactions".id_conta = "Contas".id_conta THEN valor ELSE 0 END
-          ),0)) as saldo_contas FROM "Transactions"
-          )`),
+          sequelize.fn("sum", sequelize.col("Transactions.valor")),
           "saldo_atual",
         ],
       ],
@@ -42,13 +36,47 @@ module.exports = async (req, res, next) => {
           attributes: ["limite", "vencimento", "fechamento"],
           as: "cartao",
         },
+        {
+          model: Transaction,
+          attributes: ["date", "id_users", "id_conta", "valor"],
+        },
       ],
       where: {
         id_cartao: {
           [sequelize.Op.ne]: null,
         },
         id_users: req.id,
+        [sequelize.Op.and]: [
+          sequelize.where(
+            sequelize.fn(
+              "date_part",
+              "month",
+              sequelize.col("Transactions.date")
+            ),
+            sequelize.Op.eq,
+            sequelize.fn(
+              "date_part",
+              "month",
+              sequelize.cast(date, "timestamp")
+            )
+          ),
+          sequelize.where(
+            sequelize.fn(
+              "date_part",
+              "year",
+              sequelize.col("Transactions.date")
+            ),
+            sequelize.Op.eq,
+            sequelize.fn("date_part", "year", sequelize.cast(date, "timestamp"))
+          ),
+        ],
       },
+      group: [
+        "Contas.id_conta",
+        "instituicao.id_instituicao",
+        "cartao.id_cartao",
+        "Transactions.id",
+      ],
     })
       .then((data) => res.status(CREATED).json(data))
       .catch((err) => res.status(INTERNAL_SERVER_ERROR).json(err));

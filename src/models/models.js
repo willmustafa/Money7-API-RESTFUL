@@ -11,6 +11,7 @@ const objetivos = require("./ObjetivosModel");
 const transactions = require("./TransactionModel");
 const users = require("./UsersModel");
 const tags = require("./TagsModel");
+const TransacoesFuturas = require("./TransacoesFuturas");
 
 module.exports = {
   cartoes,
@@ -21,4 +22,5 @@ module.exports = {
   transactions,
   users,
   tags,
+  TransacoesFuturas,
 };

@@ -7,15 +7,14 @@ const Categorias = require("../../models/CategoriasModel");
 const Contas = require("../../models/ContasModel");
 
 module.exports = async (req, res, next) => {
-  let status = req.bodyString("status").toLowerCase();
   let id_conta = req.bodyString("id_conta").toLowerCase();
   let valor = req.bodyFloat("valor");
   let date = req.bodyString("date").toLowerCase();
   let id_conta2 = req.bodyString("id_conta2").toLowerCase();
 
-  if (!status || !id_conta || !valor || id_conta2)
+  if (!id_conta || !valor || id_conta2)
     return res.status(BAD_REQUEST).json({
-      message: "Campos necessários: status, id_conta, valor e id_conta2",
+      message: "Campos necessários: id_conta, valor e id_conta2",
     });
 
   const timeNow = new Date().toLocaleTimeString("pt-BR");
@@ -50,7 +49,6 @@ module.exports = async (req, res, next) => {
         valor: valor * -1,
         descricao: "Transferência",
         date,
-        status,
         id_conta,
         id_categoria: categorias.filter(
           (el) => el.nome == "transferência enviada"
@@ -64,7 +62,6 @@ module.exports = async (req, res, next) => {
         valor,
         descricao: "Transferência",
         date,
-        status,
         id_conta: id_conta2,
         id_categoria: categorias.filter(
           (el) => el.nome == "transferência recebida"

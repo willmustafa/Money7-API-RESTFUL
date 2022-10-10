@@ -25,11 +25,6 @@ const Transactions = database.define("Transactions", {
     allowNull: false,
     defaultValue: Sequelize.NOW,
   },
-  status: {
-    type: Sequelize.BOOLEAN,
-    allowNull: false,
-    defaultValue: true,
-  },
   objetivo: {
     type: Sequelize.BOOLEAN,
     allowNull: false,
