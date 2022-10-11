@@ -3,6 +3,7 @@ const { CREATED, INTERNAL_SERVER_ERROR, BAD_REQUEST } =
 
 const sequelize = require("sequelize");
 const TransacoesFuturas = require("../../models/TransacoesFuturas");
+const Categorias = require("../../models/CategoriasModel");
 
 module.exports = async (req, res, next) => {
   const date = req.queryString("date");
@@ -11,6 +12,13 @@ module.exports = async (req, res, next) => {
 
   try {
     await TransacoesFuturas.findAll({
+      include: [
+        {
+          model: Categorias,
+          attributes: ["nome", "cor", "icone"],
+          as: "categoria",
+        },
+      ],
       where: {
         id_users: req.id,
         [sequelize.Op.and]: [
