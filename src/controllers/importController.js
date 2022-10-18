@@ -3,6 +3,7 @@ const path = require("path");
 const Categorias = require("../models/CategoriasModel");
 const bankOfx = require("../models/Parser/bankOfx");
 const Transactions = require("../models/TransactionModel");
+const IgnorarNomes = require("../models/IgnorarNomesModel");
 const bankOfx_parser = new bankOfx();
 
 const importFromFile = async (req, res) => {
@@ -15,7 +16,7 @@ const importFromFile = async (req, res) => {
       nome: "sem categoria",
     },
     raw: true,
-  });
+  })?.id_categoria;
 
   for (const file of req.files) {
     const fileFromBuffer = file.buffer.toString("utf-8").replaceAll("&", " ");
@@ -31,27 +32,31 @@ const importFromFile = async (req, res) => {
           if (!Array.isArray(transactionArr)) transactionArr = [transactionArr];
 
           for await (const transaction of transactionArr) {
-            const parsedTransaction = bankOfx_parser.handle(transaction);
-            parsedTransaction.id_conta = id_conta;
-            parsedTransaction.id_categoria = semCategoria.id_categoria;
-            parsedTransaction.id_users = req.id;
+            const parsedTransaction = await bankOfx_parser.handle(
+              transaction,
+              id_conta,
+              req.id,
+              semCategoria
+            );
 
-            if (
-              parsedTransaction.descricao != "Pagamento recebido" &&
-              !excluir
-            ) {
+            const foundIgnorarNome = await IgnorarNomes.findAll({
+              where: {
+                nome: String(parsedTransaction.descricao).toLowerCase(),
+                id_users: req.id,
+              },
+            });
+
+            if (foundIgnorarNome?.length && !excluir) {
               await Transactions.upsert(parsedTransaction, {
                 fields: ["valor", "date"],
               });
             }
 
-            if (
-              parsedTransaction.descricao != "Pagamento recebido" &&
-              excluir
-            ) {
+            if (foundIgnorarNome?.length && excluir) {
               await Transactions.destroy({
                 where: {
                   id: parsedTransaction.id,
+                  id_users: req.id,
                 },
                 limit: 1,
               });

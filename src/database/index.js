@@ -14,7 +14,7 @@ const databaseConfig = {
       rejectUnauthorized: false,
     },
   },
-  logging: true,
+  logging: false,
 };
 
 // INIT

@@ -11,6 +11,7 @@ const importRoute = require("./import");
 const tagsRoute = require("./tags");
 const verifyJWT = require("../controllers/verifyJWT");
 const TransacoesFuturas = require("./transacoesFuturas");
+const IgnorarNomes = require("./ignorarNomes");
 
 module.exports = function (app) {
   app.get("/", async (req, res) => {
@@ -31,4 +32,5 @@ module.exports = function (app) {
   app.use("/import", importRoute);
   app.use("/tags", tagsRoute);
   app.use("/transacoesFuturas", TransacoesFuturas);
+  app.use("/ignorarNomes", IgnorarNomes);
 };

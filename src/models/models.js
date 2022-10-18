@@ -12,6 +12,7 @@ const transactions = require("./TransactionModel");
 const users = require("./UsersModel");
 const tags = require("./TagsModel");
 const TransacoesFuturas = require("./TransacoesFuturas");
+const IgnorarNomes = require("./IgnorarNomesModel");
 
 module.exports = {
   cartoes,
@@ -23,4 +24,5 @@ module.exports = {
   users,
   tags,
   TransacoesFuturas,
+  IgnorarNomes,
 };
