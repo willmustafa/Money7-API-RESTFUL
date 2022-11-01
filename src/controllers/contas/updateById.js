@@ -4,11 +4,11 @@ const { CREATED, BAD_REQUEST, INTERNAL_SERVER_ERROR } =
 const Contas = require("../../models/ContasModel");
 
 module.exports = async (req, res, next) => {
-  let saldo = req.bodyFloat("saldo").toLowerCase();
+  let saldo = req.bodyFloat("saldo");
   let date = req.bodyString("date").toLowerCase();
   let id_instituicao = req.bodyString("id_instituicao").toLowerCase();
 
-  if (!saldo || !date || !id_instituicao)
+  if (!!saldo || !!date || !!id_instituicao)
     return res.status(BAD_REQUEST).json({
       message: "Campos necessários: saldo, date, id_instituicao",
     });
