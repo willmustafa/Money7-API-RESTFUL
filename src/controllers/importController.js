@@ -46,13 +46,13 @@ const importFromFile = async (req, res) => {
               },
             });
 
-            if (foundIgnorarNome?.length && !excluir) {
+            if (!excluir) {
               await Transactions.upsert(parsedTransaction, {
                 fields: ["valor", "date"],
               });
             }
 
-            if (foundIgnorarNome?.length && excluir) {
+            if (excluir) {
               await Transactions.destroy({
                 where: {
                   id: parsedTransaction.id,
