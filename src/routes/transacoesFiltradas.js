@@ -2,8 +2,9 @@ const express = require("express");
 
 const router = express.Router();
 const transactionController = require("../controllers/transactionController");
+const { getSomaMes } = require("../controllers/transacoesFiltradas");
 
-router.get("/somaMes", transactionController.getSomaMes);
+router.get("/somaMes", getSomaMes);
 router.get("/balancoMensal", transactionController.getBalancoMensal);
 router.get(
   "/gastosReceitasMensal",
