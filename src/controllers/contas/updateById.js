@@ -8,7 +8,7 @@ module.exports = async (req, res, next) => {
   let date = req.bodyString("date").toLowerCase();
   let id_instituicao = req.bodyString("id_instituicao").toLowerCase();
 
-  if (!!saldo || !!date || !!id_instituicao)
+  if (isNaN(saldo) || !date || !id_instituicao)
     return res.status(BAD_REQUEST).json({
       message: "Campos necessários: saldo, date, id_instituicao",
     });
