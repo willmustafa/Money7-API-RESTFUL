@@ -5,7 +5,7 @@ const Sequelize = require("sequelize");
 const IgnorarNomes = require("../../models/IgnorarNomesModel");
 
 module.exports = async (req, res, next) => {
-  let nome = req.bodyString("nome").toLowerCase();
+  let nome = req.bodyString("nome");
 
   if (!nome)
     return res.status(BAD_REQUEST).json({
@@ -18,6 +18,7 @@ module.exports = async (req, res, next) => {
         nome: {
           [Sequelize.Op.iLike]: nome,
         },
+        id_users: req.id,
       },
     });
 
