@@ -51,7 +51,7 @@ module.exports = async (req, res, next) => {
     });
 
     // Send authorization roles and access token to user
-    res.json({ accessToken });
+    res.json({ accessToken, name: foundUser.name });
   } else {
     res.sendStatus(UNAUTHORIZED);
   }
