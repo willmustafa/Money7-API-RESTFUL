@@ -4,19 +4,21 @@ const Categorias = require("../models/CategoriasModel");
 const bankOfx = require("../models/Parser/bankOfx");
 const Transactions = require("../models/TransactionModel");
 const IgnorarNomes = require("../models/IgnorarNomesModel");
+const { Op } = require("sequelize");
 const bankOfx_parser = new bankOfx();
 
 const importFromFile = async (req, res) => {
   const { id_conta, excluir } = req.body;
   if (!id_conta) return res.status(400).end();
 
-  const semCategoria = await Categorias.findOne({
+  let semCategoria = await Categorias.findOne({
     attributes: ["id_categoria"],
     where: {
       nome: "sem categoria",
     },
     raw: true,
-  })?.id_categoria;
+  });
+  semCategoria = semCategoria.id_categoria;
 
   for (const file of req.files) {
     const fileFromBuffer = file.buffer.toString("utf-8").replaceAll("&", " ");
@@ -41,14 +43,21 @@ const importFromFile = async (req, res) => {
 
             const foundIgnorarNome = await IgnorarNomes.findAll({
               where: {
-                nome: String(parsedTransaction.descricao).toLowerCase(),
+                nome: {
+                  [Op.iLike]: String(parsedTransaction.descricao),
+                },
                 id_users: req.id,
               },
+              raw: true,
             });
 
-            if (!excluir) {
+            let fieldsToUpdate = ["valor", "date"];
+            if (parsedTransaction.id_categoria != semCategoria)
+              fieldsToUpdate.push("id_categoria");
+
+            if (!excluir && foundIgnorarNome.length == 0) {
               await Transactions.upsert(parsedTransaction, {
-                fields: ["valor", "date"],
+                fields: fieldsToUpdate,
               });
             }
 
