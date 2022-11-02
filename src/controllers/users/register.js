@@ -1,4 +1,4 @@
-const { CREATED } = require("http-status-codes").StatusCodes;
+const { OK, CONFLICT } = require("http-status-codes").StatusCodes;
 
 const bcrypt = require("bcrypt");
 const Users = require("../../models/UsersModel");
@@ -15,23 +15,33 @@ module.exports = async (req, res) => {
       .status(400)
       .json({ message: "Username, user, pwd is required." });
 
-  const salt = await bcrypt.genSalt(10);
-  pwd = String(pwd.toString());
-  const usr = {
-    name: username,
-    email: user,
-    password: await bcrypt.hash(pwd, salt),
-  };
+  const findEmail = await Users.findOne({
+    where: {
+      email: user,
+    },
+  });
 
-  const createdUser = Users.create(usr, { raw: true });
+  if (!findEmail) {
+    const salt = await bcrypt.genSalt(10);
+    pwd = String(pwd.toString());
+    const usr = {
+      name: username,
+      email: user,
+      password: await bcrypt.hash(pwd, salt),
+    };
 
-  await Categorias.bulkCreate(
-    categoriasInitialData.map((el) => {
-      return { ...el, id_users: createdUser.id };
-    }),
-    {
-      ignoreDuplicates: true,
-    }
-  );
-  res.status(CREATED).json(createdUser);
+    const createdUser = await Users.create(usr, { raw: true });
+
+    await Categorias.bulkCreate(
+      categoriasInitialData.map((el) => {
+        return { ...el, id_users: createdUser.id };
+      }),
+      {
+        ignoreDuplicates: true,
+      }
+    );
+    res.status(OK).json(createdUser);
+  } else {
+    res.status(CONFLICT).json();
+  }
 };
