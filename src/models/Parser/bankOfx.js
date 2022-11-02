@@ -1,3 +1,4 @@
+const { Op } = require("sequelize");
 const sequelize = require("sequelize");
 const { validate: uuidValidate, v4: uuidv4 } = require("uuid");
 const { ofxToDate } = require("../../utils/date-format");
@@ -28,14 +29,17 @@ class NubankOfx {
 
     const foundTransaction = await Transactions.findOne({
       where: {
-        descricao,
+        descricao: {
+          [Op.iLike]: descricao,
+        },
         id_categoria: {
           [sequelize.Op.ne]: this.semCategoria,
         },
       },
+      raw: true,
     });
 
-    if (foundTransaction?.length && foundTransaction?.id_categoria)
+    if (foundTransaction?.id_categoria)
       id_categoria = foundTransaction?.id_categoria;
 
     return {
